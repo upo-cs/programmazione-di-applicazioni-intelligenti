@@ -1,42 +1,38 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 .wrap { padding: 0.5rem 0; font-family: 'DM Sans', system-ui, sans-serif; }
-.hint { font-size: 12px; color: var(--color-text-tertiary); text-align: center; margin-bottom: 10px; }
-.stage { margin: 16px 0 6px; }
-.stage-label { font-size: 12px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: 0.3px; text-align: center; }
-.stage-dim { font-size: 11px; font-weight: 400; color: var(--color-text-tertiary); text-align: center; margin-top: 2px; font-style: italic; }
-.tok-row { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.wrap .katex { font-size: 1.15em; }
+.hint { font-size: 13px; color: var(--color-text-tertiary); text-align: center; margin-bottom: 12px; }
+.stage { margin: 18px 0 6px; }
+.stage-label { font-size: 14px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: 0.3px; text-align: center; }
+.stage-label .katex { font-size: 1.05em; }
+.stage-math { text-align: center; margin-top: 4px; }
+.tok-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
 .tok {
-  width: 82px; padding: 7px 0; text-align: center; border-radius: 8px;
-  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  width: 90px; padding: 8px 0; text-align: center; border-radius: 8px;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
   border: 1.5px solid var(--color-border-tertiary);
   background: var(--color-background-secondary); color: var(--color-text-primary);
   user-select: none;
 }
 .tok:hover:not(.active) { border-color: var(--color-border-secondary); }
 .tok.active { background: #534AB7; color: #fff; border-color: #534AB7; }
-@media (prefers-color-scheme: dark) {
-  .tok.active { background: #7F77DD; color: #26215C; border-color: #7F77DD; }
-}
-.emb-row { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+@media (prefers-color-scheme: dark) { .tok.active { background: #7F77DD; color: #26215C; border-color: #7F77DD; } }
+.emb-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
 .emb-cell {
-  width: 82px; padding: 5px 0; text-align: center; border-radius: 6px;
-  font-size: 11px; font-weight: 500;
+  width: 90px; padding: 7px 0; text-align: center; border-radius: 6px;
   background: var(--color-background-secondary); color: var(--color-text-secondary);
   border: 0.5px solid var(--color-border-tertiary);
 }
 .emb-cell.active-emb { border-color: #534AB7; background: #EEEDFE; color: #3C3489; }
-@media (prefers-color-scheme: dark) {
-  .emb-cell.active-emb { border-color: #7F77DD; background: #3C3489; color: #CECBF6; }
-}
-.matrix-grid { display: flex; justify-content: center; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
+@media (prefers-color-scheme: dark) { .emb-cell.active-emb { border-color: #7F77DD; background: #3C3489; color: #CECBF6; } }
+.matrix-grid { display: flex; justify-content: center; gap: 12px; margin: 10px 0; flex-wrap: wrap; }
 .matrix-card {
-  border-radius: 8px; padding: 8px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 150px;
+  border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 175px;
 }
-.matrix-card .m-name { font-size: 13px; font-weight: 700; }
-.matrix-card .m-shape { font-size: 11px; font-weight: 500; opacity: 0.85; }
-.matrix-card .m-formula { font-size: 10.5px; font-weight: 400; opacity: 0.7; }
+.matrix-card .m-dim { opacity: 0.8; }
 .wq { background: #EEEDFE; color: #3C3489; }
 .wk { background: #E1F5EE; color: #085041; }
 .wv { background: #FAECE7; color: #712B13; }
@@ -45,8 +41,9 @@
   .wk { background: #085041; color: #9FE1CB; }
   .wv { background: #712B13; color: #F5C4B3; }
 }
-.proj-row { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
-.proj-cell { width: 82px; padding: 5px 0; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 500; }
+.ref-block { text-align: center; margin: 10px 0 0; font-size: 13px; color: var(--color-text-tertiary); }
+.proj-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
+.proj-cell { width: 90px; padding: 7px 0; text-align: center; border-radius: 6px; font-weight: 500; }
 .q-cell { background: #EEEDFE; color: #3C3489; }
 .k-cell { background: #E1F5EE; color: #085041; }
 .v-cell { background: #FAECE7; color: #712B13; }
@@ -55,116 +52,90 @@
   .k-cell { background: #085041; color: #9FE1CB; }
   .v-cell { background: #712B13; color: #F5C4B3; }
 }
-.canvas-wrap { width: 100%; height: 100px; }
+.canvas-wrap { width: 100%; height: 115px; }
 .canvas-wrap canvas { width: 100%; height: 100%; }
-.score-row, .alpha-row { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.score-row, .alpha-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
 .score-cell, .alpha-cell {
-  width: 82px; padding: 5px 0; text-align: center; border-radius: 6px;
-  font-size: 12px; font-weight: 500; transition: all 0.25s;
+  width: 90px; padding: 7px 0; text-align: center; border-radius: 6px;
+  font-size: 14px; font-weight: 500; transition: all 0.25s;
 }
 .score-cell { background: var(--color-background-secondary); color: var(--color-text-secondary); }
-.formula { font-size: 12px; color: var(--color-text-secondary); text-align: center; margin: 6px 0 2px; font-weight: 500; }
+.formula-block {
+  background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 8px; padding: 16px 20px; margin: 8px auto; max-width: 520px; text-align: center;
+}
+.formula-block .katex { font-size: 1.45em; }
+.note { font-size: 13px; color: var(--color-text-tertiary); text-align: center; margin: 6px 0 0; line-height: 1.6; max-width: 580px; margin-left: auto; margin-right: auto; }
 .out-box {
   background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary);
-  border-radius: 8px; padding: 12px 16px; margin: 8px auto 0; max-width: 580px;
+  border-radius: 8px; padding: 16px 20px; margin: 10px auto 0; max-width: 640px; text-align: center;
 }
-.out-equation { font-size: 13px; color: var(--color-text-primary); text-align: center; line-height: 1.8; }
-.out-equation .coeff { font-weight: 600; }
-.out-equation .v-ref { font-weight: 500; color: #712B13; }
-@media (prefers-color-scheme: dark) { .out-equation .v-ref { color: #F5C4B3; } }
-.out-equation .plus { color: var(--color-text-tertiary); margin: 0 2px; }
-.out-result { font-size: 12px; color: var(--color-text-secondary); text-align: center; margin-top: 6px; line-height: 1.6; }
-.legend-row { display: flex; justify-content: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-secondary); }
-.legend-dot { width: 10px; height: 10px; border-radius: 3px; }
-.note { font-size: 11px; color: var(--color-text-tertiary); text-align: center; margin: 3px 0 0; line-height: 1.5; max-width: 540px; margin-left: auto; margin-right: auto; }
-.ref-table {
-  margin: 10px auto 0; font-size: 11px; border-collapse: collapse; color: var(--color-text-secondary);
-}
-.ref-table td { padding: 2px 10px; }
-.ref-table td:first-child { font-weight: 600; color: var(--color-text-primary); text-align: right; }
+.out-box .katex { font-size: 1.05em; }
+.out-result { font-size: 13.5px; color: var(--color-text-secondary); text-align: center; margin-top: 8px; line-height: 1.6; }
+.legend-row { display: flex; justify-content: center; gap: 18px; margin-top: 18px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-secondary); }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 </style>
 
 <div class="wrap">
   <div class="hint">Clicca un token per selezionarlo come query</div>
 
-  <div class="stage">
-    <div class="stage-label">Input: token della frase</div>
-  </div>
+  <div class="stage"><div class="stage-label">Input: token della frase</div></div>
   <div class="tok-row" id="toks"></div>
 
   <div class="stage">
     <div class="stage-label">0. Embedding</div>
-    <div class="stage-dim">Ogni xᵢ ∈ ℝ^d_model</div>
+    <div class="stage-math" id="emb-dim"></div>
   </div>
   <div class="emb-row" id="embs"></div>
 
   <div class="stage">
     <div class="stage-label">1. Proiezione lineare tramite tre matrici di pesi apprese</div>
   </div>
-  <div class="matrix-grid">
-    <div class="matrix-card wq">
-      <span class="m-name">W<sub>Q</sub></span>
-      <span class="m-shape">matrice d_k × d_model</span>
-      <span class="m-formula">qᵢ = W_Q · xᵢ → vettore d_k</span>
-    </div>
-    <div class="matrix-card wk">
-      <span class="m-name">W<sub>K</sub></span>
-      <span class="m-shape">matrice d_k × d_model</span>
-      <span class="m-formula">kᵢ = W_K · xᵢ → vettore d_k</span>
-    </div>
-    <div class="matrix-card wv">
-      <span class="m-name">W<sub>V</sub></span>
-      <span class="m-shape">matrice d_v × d_model</span>
-      <span class="m-formula">vᵢ = W_V · xᵢ → vettore d_v</span>
-    </div>
-  </div>
-  <table class="ref-table">
-    <tr><td>Transformer originale:</td><td>d_model = 512, d_k = d_v = 64, h = 8 heads</td></tr>
-  </table>
+  <div class="matrix-grid" id="matrix-cards"></div>
+  <div class="ref-block" id="ref-block"></div>
 
-  <div class="proj-row" id="q-row" style="margin-top:10px"></div>
-  <div style="height:4px"></div>
+  <div class="proj-row" id="q-row" style="margin-top:12px"></div>
+  <div style="height:5px"></div>
   <div class="proj-row" id="k-row"></div>
-  <div style="height:4px"></div>
+  <div style="height:5px"></div>
   <div class="proj-row" id="v-row"></div>
   <div class="note" id="proj-note"></div>
 
   <div class="stage">
-    <div class="stage-label">2. Compatibilità: q<sub>query</sub> · kᵢ</div>
-    <div class="stage-dim">Dot product tra due vettori ∈ ℝ^d_k → uno scalare per token</div>
+    <div class="stage-label" id="compat-label"></div>
+    <div class="stage-math" id="compat-dim"></div>
   </div>
   <div class="canvas-wrap"><canvas id="cv"></canvas></div>
 
-  <div class="stage">
-    <div class="stage-label">3. Score grezzi</div>
-  </div>
+  <div class="stage"><div class="stage-label">3. Score grezzi</div></div>
   <div class="score-row" id="scores"></div>
 
-  <div class="formula">αᵢ = softmax( score_i / √d_k )</div>
-  <div class="note">Ogni αᵢ ∈ [0, 1] e Σ αᵢ = 1. Indicano quanta attenzione il token query presta a ciascun altro token.</div>
+  <div class="formula-block" id="softmax-formula"></div>
+  <div class="note" id="alpha-note"></div>
 
-  <div class="stage">
-    <div class="stage-label">4. Pesi di attenzione αᵢ</div>
-  </div>
+  <div class="stage"><div class="stage-label" id="alpha-label"></div></div>
   <div class="alpha-row" id="alphas"></div>
 
   <div class="stage">
     <div class="stage-label">5. Output: somma pesata dei value</div>
-    <div class="stage-dim">output = Σ αᵢ · vᵢ = α₁·v₁ + α₂·v₂ + ... + αₙ·vₙ ∈ ℝ^d_v</div>
+    <div class="stage-math" id="out-formula-general"></div>
   </div>
   <div class="out-box" id="out-box"></div>
   <div class="out-result" id="out-result"></div>
 
-  <div class="legend-row">
-    <div class="legend-item"><div class="legend-dot q-cell"></div>Q ∈ ℝ^d_k</div>
-    <div class="legend-item"><div class="legend-dot k-cell"></div>K ∈ ℝ^d_k</div>
-    <div class="legend-item"><div class="legend-dot v-cell"></div>V ∈ ℝ^d_v</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary)"></div>x ∈ ℝ^d_model</div>
-  </div>
+  <div class="legend-row" id="legend"></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script>
+const K = katex;
+const ro = { throwOnError: false };
+const rd = { throwOnError: false, displayMode: true };
+function tex(t) { return K.renderToString(t, ro); }
+function texBlock(el, t) { K.render(t, el, rd); }
+function texInline(el, t) { K.render(t, el, ro); }
+
 const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
 const rawScores = {
   0: [1.8, 3.2, 0.4, 0.9, 0.5, 1.1],
@@ -174,7 +145,6 @@ const rawScores = {
   4: [0.4, 0.6, 0.3, 1.0, 1.5, 4.1],
   5: [0.3, 1.8, 0.2, 1.2, 3.8, 1.4]
 };
-
 let active = 3;
 
 function softmax(arr) {
@@ -182,6 +152,44 @@ function softmax(arr) {
   const exps = arr.map(v => Math.exp(v - max));
   const sum = exps.reduce((a, b) => a + b, 0);
   return exps.map(e => e / sum);
+}
+
+function renderStatic() {
+  texInline(document.getElementById('emb-dim'), 'x_i \\in \\mathbb{R}^{d_{\\text{model}}}');
+
+  const mc = document.getElementById('matrix-cards');
+  mc.innerHTML =
+    '<div class="matrix-card wq"><div id="mc-wq"></div><div class="m-dim" id="mc-wq-dim"></div></div>' +
+    '<div class="matrix-card wk"><div id="mc-wk"></div><div class="m-dim" id="mc-wk-dim"></div></div>' +
+    '<div class="matrix-card wv"><div id="mc-wv"></div><div class="m-dim" id="mc-wv-dim"></div></div>';
+  texInline(document.getElementById('mc-wq'), 'q_i = W_Q \\cdot x_i');
+  texInline(document.getElementById('mc-wq-dim'), 'W_Q \\in \\mathbb{R}^{d_k \\times d_{\\text{model}}}');
+  texInline(document.getElementById('mc-wk'), 'k_i = W_K \\cdot x_i');
+  texInline(document.getElementById('mc-wk-dim'), 'W_K \\in \\mathbb{R}^{d_k \\times d_{\\text{model}}}');
+  texInline(document.getElementById('mc-wv'), 'v_i = W_V \\cdot x_i');
+  texInline(document.getElementById('mc-wv-dim'), 'W_V \\in \\mathbb{R}^{d_v \\times d_{\\text{model}}}');
+
+  const rb = document.getElementById('ref-block');
+  rb.innerHTML = 'Transformer originale: ' + tex('d_{\\text{model}} = 512') + ', &nbsp;' + tex('d_k = d_v = 64') + ', &nbsp;' + tex('h = 8') + ' heads';
+
+  document.getElementById('compat-label').innerHTML = '2. Compatibilità: ' + tex('q_{\\text{query}} \\cdot k_i');
+  texInline(document.getElementById('compat-dim'), '\\mathbb{R}^{d_k} \\times \\mathbb{R}^{d_k} \\rightarrow \\mathbb{R} \\quad \\text{(uno scalare per token)}');
+
+  texBlock(document.getElementById('softmax-formula'), '\\alpha_i = \\text{softmax}\\!\\left(\\frac{q \\cdot k_i}{\\sqrt{d_k}}\\right)');
+
+  const an = document.getElementById('alpha-note');
+  an.innerHTML = 'Ogni ' + tex('\\alpha_i \\in [0,\\,1]') + ' e ' + tex('\\displaystyle\\sum_{j=1}^{n} \\alpha_j = 1') + '. Indicano quanta attenzione il token query presta a ciascun altro token.';
+
+  document.getElementById('alpha-label').innerHTML = '4. Pesi di attenzione ' + tex('\\alpha_i');
+
+  texInline(document.getElementById('out-formula-general'), '\\text{out} = \\displaystyle\\sum_i \\alpha_i \\cdot v_i \\;\\in\\; \\mathbb{R}^{d_v}');
+
+  const lg = document.getElementById('legend');
+  lg.innerHTML =
+    '<div class="legend-item"><div class="legend-dot q-cell"></div>' + tex('Q \\in \\mathbb{R}^{d_k}') + '</div>' +
+    '<div class="legend-item"><div class="legend-dot k-cell"></div>' + tex('K \\in \\mathbb{R}^{d_k}') + '</div>' +
+    '<div class="legend-item"><div class="legend-dot v-cell"></div>' + tex('V \\in \\mathbb{R}^{d_v}') + '</div>' +
+    '<div class="legend-item"><div class="legend-dot" style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary)"></div>' + tex('x \\in \\mathbb{R}^{d_{\\text{model}}}') + '</div>';
 }
 
 function render() {
@@ -202,7 +210,7 @@ function render() {
   tokens.forEach((t, i) => {
     const d = document.createElement('div');
     d.className = 'emb-cell' + (i === active ? ' active-emb' : '');
-    d.textContent = 'x_' + t;
+    d.innerHTML = tex('x_{\\text{' + t + '}}');
     embsEl.appendChild(d);
   });
 
@@ -213,24 +221,24 @@ function render() {
   tokens.forEach((t, i) => {
     const q = document.createElement('div');
     q.className = 'proj-cell ' + (i === active ? 'q-cell' : '');
-    if (i !== active) { q.style.background = 'transparent'; q.style.color = 'var(--color-text-tertiary)'; }
-    q.textContent = i === active ? 'q_' + t : '·';
+    if (i !== active) { q.style.background = 'transparent'; q.style.color = 'var(--color-text-tertiary)'; q.textContent = '·'; }
+    else { q.innerHTML = tex('q_{\\text{' + t + '}}'); }
     qRow.appendChild(q);
 
     const k = document.createElement('div');
     k.className = 'proj-cell k-cell';
-    k.textContent = 'k_' + t;
+    k.innerHTML = tex('k_{\\text{' + t + '}}');
     kRow.appendChild(k);
 
     const v = document.createElement('div');
     v.className = 'proj-cell v-cell';
-    v.textContent = 'v_' + t;
+    v.innerHTML = tex('v_{\\text{' + t + '}}');
     vRow.appendChild(v);
   });
 
   const noteEl = document.getElementById('proj-note');
   const tn = tokens[active];
-  noteEl.textContent = 'q_' + tn + ' = W_Q · x_' + tn + '  ∈ ℝ^d_k   |   Ogni kᵢ e vᵢ si ottiene allo stesso modo dai rispettivi embedding';
+  noteEl.innerHTML = tex('q_{\\text{' + tn + '}} = W_Q \\cdot x_{\\text{' + tn + '}}') + ' &nbsp;|&nbsp; Ogni ' + tex('k_i') + ' e ' + tex('v_i') + ' si ottiene allo stesso modo';
 
   const scores = rawScores[active];
   const alphas = softmax(scores);
@@ -253,35 +261,41 @@ function render() {
     const d = document.createElement('div');
     d.className = 'alpha-cell';
     const ratio = a / maxAlpha;
-    const bg = dark
-      ? `rgba(127,119,221,${0.15 + ratio * 0.6})`
-      : `rgba(83,74,183,${0.08 + ratio * 0.35})`;
-    d.style.background = bg;
+    const [r,g,b] = dark ? [127,119,221] : [83,74,183];
+    d.style.background = `rgba(${r},${g},${b},${0.08 + ratio * 0.35})`;
     d.style.color = dark ? '#CECBF6' : '#3C3489';
-    d.textContent = 'α_' + tokens[i] + '=' + (a * 100).toFixed(1) + '%';
+    d.innerHTML = tex('\\alpha_{\\scriptscriptstyle\\text{' + tokens[i] + '}}') + '<span style="font-size:13px;margin-left:3px;font-weight:500">' + (a * 100).toFixed(1) + '%</span>';
     d.style.fontWeight = a === maxAlpha ? '600' : '400';
-    d.style.fontSize = '10.5px';
+    d.style.display = 'flex'; d.style.alignItems = 'center'; d.style.justifyContent = 'center'; d.style.gap = '2px';
     alphasEl.appendChild(d);
   });
 
   const outBox = document.getElementById('out-box');
-  const parts = tokens.map((t, i) => {
+  const half = Math.ceil(tokens.length / 2);
+  const row1 = tokens.slice(0, half).map((t, i) => {
     const pct = (alphas[i] * 100).toFixed(1);
-    return '<span class="coeff" style="opacity:' + (0.4 + (alphas[i]/maxAlpha)*0.6) + '">' + pct + '%</span>'
-      + '<span class="plus">·</span>'
-      + '<span class="v-ref">v_' + t + '</span>';
+    return '\\underset{' + pct + '\\%}{\\alpha_{\\text{' + t + '}} \\cdot v_{\\text{' + t + '}}}';
   });
-  outBox.innerHTML = '<div class="out-equation">out_' + tokens[active] + ' = ' + parts.join('<span class="plus"> + </span>') + '</div>';
+  const row2 = tokens.slice(half).map((t, idx) => {
+    const i = idx + half;
+    const pct = (alphas[i] * 100).toFixed(1);
+    return '\\underset{' + pct + '\\%}{\\alpha_{\\text{' + t + '}} \\cdot v_{\\text{' + t + '}}}';
+  });
+  const outTex = '\\begin{aligned} \\text{out}_{\\text{' + tokens[active] + '}} \\;=\\;& '
+    + row1.join(' \\,+\\, ') + ' \\;+ \\\\ & '
+    + row2.join(' \\,+\\, ')
+    + '\\end{aligned}';
+  outBox.innerHTML = '';
+  K.render(outTex, outBox, { throwOnError: false, displayMode: true });
 
   const outResult = document.getElementById('out-result');
   const topIdx = alphas.indexOf(maxAlpha);
-  outResult.textContent = 'L\'output è un vettore ∈ ℝ^d_v che "mescola" i value di tutti i token, pesati per rilevanza. "'
-    + tokens[active] + '" prende il ' + (alphas[topIdx]*100).toFixed(0) + '% del contenuto di "' + tokens[topIdx] + '"';
+  outResult.innerHTML = 'L\'output è un vettore ' + tex('\\in \\mathbb{R}^{d_v}') + ' che mescola i value di tutti i token, pesati per rilevanza. "' + tokens[active] + '" prende il ' + (alphas[topIdx]*100).toFixed(0) + '% del contenuto di "' + tokens[topIdx] + '"';
 
-  drawLines(alphas);
+  drawLines(alphas, dark);
 }
 
-function drawLines(alphas) {
+function drawLines(alphas, dark) {
   const cv = document.getElementById('cv');
   const dpr = window.devicePixelRatio || 1;
   const rect = cv.getBoundingClientRect();
@@ -291,37 +305,28 @@ function drawLines(alphas) {
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, rect.width, rect.height);
 
-  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const n = tokens.length;
-  const gap = 6;
-  const tokW = 82;
+  const gap = 7, tokW = 90;
   const totalW = n * tokW + (n - 1) * gap;
   const startX = (rect.width - totalW) / 2;
   const maxAlpha = Math.max(...alphas);
-
   const qX = startX + active * (tokW + gap) + tokW / 2;
-  const topY = 6;
+  const [r,g,b] = dark ? [127,119,221] : [83,74,183];
 
   tokens.forEach((_, i) => {
     const kX = startX + i * (tokW + gap) + tokW / 2;
-    const botY = rect.height - 6;
     const ratio = alphas[i] / maxAlpha;
-    const lw = 0.8 + ratio * 4;
-    const alpha = 0.15 + ratio * 0.85;
-
     ctx.beginPath();
-    const cpY = rect.height * 0.5;
-    ctx.moveTo(qX, topY);
-    ctx.bezierCurveTo(qX, cpY, kX, cpY, kX, botY);
-    ctx.strokeStyle = dark
-      ? `rgba(127,119,221,${alpha})`
-      : `rgba(83,74,183,${alpha})`;
-    ctx.lineWidth = lw;
+    ctx.moveTo(qX, 6);
+    ctx.bezierCurveTo(qX, 58, kX, 58, kX, 109);
+    ctx.strokeStyle = `rgba(${r},${g},${b},${0.15 + ratio * 0.85})`;
+    ctx.lineWidth = 0.8 + ratio * 4;
     ctx.lineCap = 'round';
     ctx.stroke();
   });
 }
 
+renderStatic();
 render();
 window.addEventListener('resize', render);
 </script>
