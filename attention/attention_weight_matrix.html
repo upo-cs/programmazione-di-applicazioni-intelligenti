@@ -1,0 +1,183 @@
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.wrap { font-family: 'DM Sans', system-ui, sans-serif; padding: 0.5rem 0; }
+.wrap .katex { font-size: 1.15em; }
+.matrix-container { display: flex; justify-content: center; align-items: flex-start; gap: 0; }
+.row-labels { display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; padding-right: 6px; padding-top: 38px; }
+.row-label {
+  height: 56px; display: flex; align-items: center; justify-content: flex-end;
+  font-size: 13px; font-weight: 500; color: var(--color-text-primary); cursor: pointer;
+  padding-right: 4px; border-radius: 6px 0 0 6px; transition: background 0.15s;
+}
+.row-label:hover { background: var(--color-background-secondary); }
+.row-label.active { color: #534AB7; font-weight: 600; }
+@media (prefers-color-scheme: dark) { .row-label.active { color: #7F77DD; } }
+.grid-area { display: flex; flex-direction: column; align-items: center; }
+.col-labels { display: flex; gap: 2px; margin-bottom: 4px; }
+.col-label {
+  width: 56px; text-align: center; font-size: 13px; font-weight: 500;
+  color: var(--color-text-primary); padding: 8px 0;
+}
+.grid { display: grid; grid-template-columns: repeat(6, 56px); gap: 2px; }
+.cell {
+  width: 56px; height: 56px; border-radius: 6px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px;
+  font-size: 12px; font-weight: 500; transition: all 0.25s; cursor: pointer;
+  border: 1px solid transparent;
+}
+.cell .pct { font-size: 13px; font-weight: 600; }
+.cell:hover { border-color: var(--color-border-secondary); transform: scale(1.06); }
+.axis-label-row { text-align: center; margin-top: 10px; font-size: 13px; color: var(--color-text-secondary); }
+.axis-label-col { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+  font-size: 13px; color: var(--color-text-secondary); display: flex; align-items: center;
+  justify-content: center; padding-left: 8px; margin-top: 38px; }
+.note-box {
+  background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 8px; padding: 14px 18px; margin: 16px auto 0; max-width: 540px;
+  font-size: 13px; color: var(--color-text-secondary); line-height: 1.7;
+}
+.note-box .katex { font-size: 1.0em; }
+.legend-bar { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 14px; }
+.legend-gradient { width: 180px; height: 14px; border-radius: 4px; }
+.legend-label { font-size: 12px; color: var(--color-text-tertiary); }
+.highlight-info { text-align: center; font-size: 13px; color: var(--color-text-secondary); margin-top: 10px; min-height: 20px; }
+.highlight-info .katex { font-size: 1.0em; }
+</style>
+
+<div class="wrap">
+  <div class="matrix-container">
+    <div class="axis-label-col" id="axis-col-label"></div>
+    <div class="row-labels" id="row-labels"></div>
+    <div class="grid-area">
+      <div class="col-labels" id="col-labels"></div>
+      <div class="grid" id="grid"></div>
+      <div class="axis-label-row" id="axis-row-label"></div>
+    </div>
+  </div>
+
+  <div class="highlight-info" id="highlight-info"></div>
+
+  <div class="legend-bar">
+    <span class="legend-label">0%</span>
+    <canvas class="legend-gradient" id="legend-canvas" width="180" height="14"></canvas>
+    <span class="legend-label">100%</span>
+  </div>
+
+  <div class="note-box" id="note-box"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const K = katex;
+const ro = { throwOnError: false };
+function tex(t) { return K.renderToString(t, ro); }
+
+const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
+const weights = [
+  [0.10, 0.35, 0.05, 0.30, 0.05, 0.15],
+  [0.15, 0.12, 0.05, 0.18, 0.10, 0.40],
+  [0.08, 0.10, 0.07, 0.55, 0.10, 0.10],
+  [0.05, 0.40, 0.15, 0.10, 0.10, 0.20],
+  [0.05, 0.10, 0.05, 0.15, 0.10, 0.55],
+  [0.04, 0.20, 0.04, 0.12, 0.45, 0.15]
+];
+
+let activeRow = -1;
+
+function purpleColor(alpha, dark) {
+  if (dark) {
+    const r = Math.round(62 + alpha * (127 - 62));
+    const g = Math.round(52 + alpha * (119 - 52));
+    const b = Math.round(137 + alpha * (221 - 137));
+    return `rgb(${r},${g},${b})`;
+  } else {
+    const r = Math.round(238 + alpha * (83 - 238));
+    const g = Math.round(237 + alpha * (74 - 237));
+    const b = Math.round(254 + alpha * (183 - 254));
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
+function textColor(alpha, dark) {
+  if (dark) return alpha > 0.4 ? '#EEEDFE' : '#CECBF6';
+  return alpha > 0.4 ? '#ffffff' : '#3C3489';
+}
+
+function render() {
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  document.getElementById('axis-row-label').innerHTML = 'Key (a chi presta attenzione) ' + tex('\\rightarrow');
+  document.getElementById('axis-col-label').innerHTML = tex('\\leftarrow') + ' Query (chi guarda)';
+
+  const colLabels = document.getElementById('col-labels');
+  colLabels.innerHTML = '';
+  tokens.forEach(t => {
+    const d = document.createElement('div');
+    d.className = 'col-label';
+    d.textContent = t;
+    colLabels.appendChild(d);
+  });
+
+  const rowLabels = document.getElementById('row-labels');
+  rowLabels.innerHTML = '';
+  tokens.forEach((t, i) => {
+    const d = document.createElement('div');
+    d.className = 'row-label' + (i === activeRow ? ' active' : '');
+    d.textContent = t;
+    d.onclick = () => { activeRow = activeRow === i ? -1 : i; render(); };
+    rowLabels.appendChild(d);
+  });
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const maxW = Math.max(...weights.flat());
+
+  tokens.forEach((_, ri) => {
+    tokens.forEach((_, ci) => {
+      const w = weights[ri][ci];
+      const norm = w / maxW;
+      const d = document.createElement('div');
+      d.className = 'cell';
+      const dimmed = activeRow >= 0 && activeRow !== ri;
+      const intensity = dimmed ? norm * 0.2 : norm;
+      d.style.background = purpleColor(intensity, dark);
+      d.style.color = dimmed ? (dark ? '#888780' : '#b4b2a9') : textColor(norm, dark);
+      d.style.opacity = dimmed ? 0.5 : 1;
+      d.innerHTML = '<span class="pct">' + (w * 100).toFixed(0) + '%</span>';
+
+      d.onmouseenter = () => {
+        const info = document.getElementById('highlight-info');
+        info.innerHTML = tex('\\alpha_{\\text{' + tokens[ri] + '} \\rightarrow \\text{' + tokens[ci] + '}}')
+          + ' = ' + (w * 100).toFixed(1) + '% — "' + tokens[ri] + '" presta il '
+          + (w * 100).toFixed(0) + '% di attenzione a "' + tokens[ci] + '"';
+      };
+      d.onmouseleave = () => {
+        document.getElementById('highlight-info').innerHTML = '';
+      };
+
+      grid.appendChild(d);
+    });
+  });
+
+  const lc = document.getElementById('legend-canvas');
+  const ctx = lc.getContext('2d');
+  for (let x = 0; x < 180; x++) {
+    ctx.fillStyle = purpleColor(x / 179, dark);
+    ctx.fillRect(x, 0, 1, 14);
+  }
+
+  const nb = document.getElementById('note-box');
+  nb.innerHTML = '<b>Come leggere la matrice</b><br>'
+    + 'Ogni <b>riga</b> corrisponde a un token <b>query</b> — il token che "guarda" gli altri. '
+    + 'Ogni <b>colonna</b> corrisponde a un token <b>key</b> — il token che viene guardato.<br>'
+    + 'La cella (riga ' + tex('i') + ', colonna ' + tex('j') + ') contiene il peso '
+    + tex('\\alpha_{ij}') + ': quanta attenzione il token ' + tex('i')
+    + ' presta al token ' + tex('j') + '. '
+    + 'Ogni riga somma a 100% (distribuzione softmax).<br>'
+    + 'Colore più intenso = attenzione maggiore.';
+}
+
+render();
+</script>
