@@ -1,239 +1,373 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attention weight matrix</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
-<style>
-:root {
-  --bg-page: #f8f7f4;
-  --bg-primary: #ffffff;
-  --bg-secondary: #F1EFE8;
-  --text-primary: #2c2c2a;
-  --text-secondary: #5f5e5a;
-  --text-tertiary: #888780;
-  --border-light: #e5e4df;
-  --border-mid: #b4b2a9;
-  --purple-light: rgb(238,237,254);
-  --purple-dark: rgb(83,74,183);
-  --purple-text-hi: #ffffff;
-  --purple-text-lo: #3C3489;
-  --purple-active: #534AB7;
-  --dimmed-text: #b4b2a9;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-page: #1a1a18;
-    --bg-primary: #2c2c2a;
-    --bg-secondary: #444441;
-    --text-primary: #d3d1c7;
-    --text-secondary: #b4b2a9;
-    --text-tertiary: #888780;
-    --border-light: #444441;
-    --border-mid: #5f5e5a;
-    --purple-light: rgb(62,52,137);
-    --purple-dark: rgb(127,119,221);
-    --purple-text-hi: #EEEDFE;
-    --purple-text-lo: #CECBF6;
-    --purple-active: #7F77DD;
-    --dimmed-text: #888780;
-  }
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
-  background: var(--bg-page); color: var(--text-primary);
-  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-  padding: 2rem 1rem;
-}
-h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; }
-.sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; }
-.card-wrap {
-  background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: 12px;
-  padding: 1.5rem; max-width: 720px; width: 100%;
-}
-.card-wrap .katex { font-size: 1.15em; }
-.matrix-container { display: flex; justify-content: center; align-items: flex-start; gap: 0; }
-.row-labels { display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; padding-right: 6px; padding-top: 38px; }
-.row-label {
-  height: 56px; display: flex; align-items: center; justify-content: flex-end;
-  font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;
-  padding-right: 4px; border-radius: 6px 0 0 6px; transition: background 0.15s;
-}
-.row-label:hover { background: var(--bg-secondary); }
-.row-label.active { color: var(--purple-active); font-weight: 600; }
-.grid-area { display: flex; flex-direction: column; align-items: center; }
-.col-labels { display: flex; gap: 2px; margin-bottom: 4px; }
-.col-label {
-  width: 56px; text-align: center; font-size: 13px; font-weight: 500;
-  color: var(--text-primary); padding: 8px 0;
-}
-.grid { display: grid; grid-template-columns: repeat(6, 56px); gap: 2px; }
-.cell {
-  width: 56px; height: 56px; border-radius: 6px; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 500; transition: all 0.25s; cursor: pointer;
-  border: 1px solid transparent;
-}
-.cell .pct { font-size: 13px; font-weight: 600; }
-.cell:hover { border-color: var(--border-mid); transform: scale(1.06); }
-.axis-label-row { text-align: center; margin-top: 10px; font-size: 13px; color: var(--text-secondary); }
-.axis-label-col { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
-  font-size: 13px; color: var(--text-secondary); display: flex; align-items: center;
-  justify-content: center; padding-left: 8px; margin-top: 38px; }
-.note-box {
-  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
-  border-radius: 8px; padding: 14px 18px; margin: 16px auto 0; max-width: 540px;
-  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
-}
-.note-box .katex { font-size: 1.0em; }
-.legend-bar { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 14px; }
-.legend-gradient { width: 180px; height: 14px; border-radius: 4px; }
-.legend-label { font-size: 12px; color: var(--text-tertiary); }
-.highlight-info { text-align: center; font-size: 13px; color: var(--text-secondary); margin-top: 10px; min-height: 20px; }
-.highlight-info .katex { font-size: 1.0em; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attention weight matrix</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <style>
+    :root {
+      --bg-page: #f8f7f4;
+      --bg-primary: #ffffff;
+      --bg-secondary: #F1EFE8;
+      --text-primary: #2c2c2a;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --border-light: #e5e4df;
+      --border-mid: #b4b2a9;
+      --purple-light: rgb(238, 237, 254);
+      --purple-dark: rgb(83, 74, 183);
+      --purple-text-hi: #ffffff;
+      --purple-text-lo: #3C3489;
+      --purple-active: #534AB7;
+      --dimmed-text: #b4b2a9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-wrap {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 720px;
+      width: 100%;
+    }
+
+    .card-wrap .katex {
+      font-size: 1.15em;
+    }
+
+    .matrix-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 0;
+    }
+
+    .row-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 2px;
+      padding-right: 6px;
+      padding-top: 38px;
+    }
+
+    .row-label {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      padding-right: 4px;
+      border-radius: 6px 0 0 6px;
+      transition: background 0.15s;
+    }
+
+    .row-label:hover {
+      background: var(--bg-secondary);
+    }
+
+    .row-label.active {
+      color: var(--purple-active);
+      font-weight: 600;
+    }
+
+    .grid-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .col-labels {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+
+    .col-label {
+      width: 56px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      padding: 8px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(6, 56px);
+      gap: 2px;
+    }
+
+    .cell {
+      width: 56px;
+      height: 56px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.25s;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .cell .pct {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .cell:hover {
+      border-color: var(--border-mid);
+      transform: scale(1.06);
+    }
+
+    .axis-label-row {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .axis-label-col {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-left: 8px;
+      margin-top: 38px;
+    }
+
+    .note-box {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-light);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 16px auto 0;
+      max-width: 540px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .note-box .katex {
+      font-size: 1.0em;
+    }
+
+    .legend-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    .legend-gradient {
+      width: 180px;
+      height: 14px;
+      border-radius: 4px;
+    }
+
+    .legend-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .highlight-info {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 10px;
+      min-height: 20px;
+    }
+
+    .highlight-info .katex {
+      font-size: 1.0em;
+    }
+  </style>
 </head>
+
 <body>
-<h1>Attention weight matrix</h1>
-<p class="sub">"Il gatto si sedette sul tappeto"</p>
-<div class="card-wrap">
-  <div class="matrix-container">
-    <div class="axis-label-col" id="axis-col-label"></div>
-    <div class="row-labels" id="row-labels"></div>
-    <div class="grid-area">
-      <div class="col-labels" id="col-labels"></div>
-      <div class="grid" id="grid"></div>
-      <div class="axis-label-row" id="axis-row-label"></div>
+  <h1>Attention weight matrix</h1>
+  <p class="sub">"Il gatto si sedette sul tappeto"</p>
+  <div class="card-wrap">
+    <div class="matrix-container">
+      <div class="axis-label-col" id="axis-col-label"></div>
+      <div class="row-labels" id="row-labels"></div>
+      <div class="grid-area">
+        <div class="col-labels" id="col-labels"></div>
+        <div class="grid" id="grid"></div>
+        <div class="axis-label-row" id="axis-row-label"></div>
+      </div>
     </div>
+
+    <div class="highlight-info" id="highlight-info"></div>
+
+    <div class="legend-bar">
+      <span class="legend-label">0%</span>
+      <canvas class="legend-gradient" id="legend-canvas" width="180" height="14"></canvas>
+      <span class="legend-label">100%</span>
+    </div>
+
+    <div class="note-box" id="note-box"></div>
   </div>
 
-  <div class="highlight-info" id="highlight-info"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script>
+    const K = katex;
+    const ro = { throwOnError: false };
+    function tex(t) { return K.renderToString(t, ro); }
 
-  <div class="legend-bar">
-    <span class="legend-label">0%</span>
-    <canvas class="legend-gradient" id="legend-canvas" width="180" height="14"></canvas>
-    <span class="legend-label">100%</span>
-  </div>
+    const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
+    const weights = [
+      [0.10, 0.35, 0.05, 0.30, 0.05, 0.15],
+      [0.15, 0.12, 0.05, 0.18, 0.10, 0.40],
+      [0.08, 0.10, 0.07, 0.55, 0.10, 0.10],
+      [0.05, 0.40, 0.15, 0.10, 0.10, 0.20],
+      [0.05, 0.10, 0.05, 0.15, 0.10, 0.55],
+      [0.04, 0.20, 0.04, 0.12, 0.45, 0.15]
+    ];
 
-  <div class="note-box" id="note-box"></div>
-</div>
+    let activeRow = -1;
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
-<script>
-const K = katex;
-const ro = { throwOnError: false };
-function tex(t) { return K.renderToString(t, ro); }
-
-const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
-const weights = [
-  [0.10, 0.35, 0.05, 0.30, 0.05, 0.15],
-  [0.15, 0.12, 0.05, 0.18, 0.10, 0.40],
-  [0.08, 0.10, 0.07, 0.55, 0.10, 0.10],
-  [0.05, 0.40, 0.15, 0.10, 0.10, 0.20],
-  [0.05, 0.10, 0.05, 0.15, 0.10, 0.55],
-  [0.04, 0.20, 0.04, 0.12, 0.45, 0.15]
-];
-
-let activeRow = -1;
-
-function getColors() {
-  const s = getComputedStyle(document.documentElement);
-  const get = (n) => s.getPropertyValue(n).trim();
-  const parseRGB = (v) => v.match(/\d+/g).map(Number);
-  return {
-    light: parseRGB(get('--purple-light')),
-    dark: parseRGB(get('--purple-dark')),
-    textHi: get('--purple-text-hi'),
-    textLo: get('--purple-text-lo'),
-    dimmed: get('--dimmed-text')
-  };
-}
-
-function interpolate(c1, c2, t) {
-  return c1.map((v, i) => Math.round(v + t * (c2[i] - v)));
-}
-
-function render() {
-  const colors = getColors();
-
-  document.getElementById('axis-row-label').innerHTML = 'Key (a chi presta attenzione) ' + tex('\\rightarrow');
-  document.getElementById('axis-col-label').innerHTML = tex('\\leftarrow') + ' Query (chi guarda)';
-
-  const colLabels = document.getElementById('col-labels');
-  colLabels.innerHTML = '';
-  tokens.forEach(t => {
-    const d = document.createElement('div');
-    d.className = 'col-label';
-    d.textContent = t;
-    colLabels.appendChild(d);
-  });
-
-  const rowLabels = document.getElementById('row-labels');
-  rowLabels.innerHTML = '';
-  tokens.forEach((t, i) => {
-    const d = document.createElement('div');
-    d.className = 'row-label' + (i === activeRow ? ' active' : '');
-    d.textContent = t;
-    d.onclick = () => { activeRow = activeRow === i ? -1 : i; render(); };
-    rowLabels.appendChild(d);
-  });
-
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
-  const maxW = Math.max(...weights.flat());
-
-  tokens.forEach((_, ri) => {
-    tokens.forEach((_, ci) => {
-      const w = weights[ri][ci];
-      const norm = w / maxW;
-      const d = document.createElement('div');
-      d.className = 'cell';
-      const dimmed = activeRow >= 0 && activeRow !== ri;
-      const intensity = dimmed ? norm * 0.2 : norm;
-      const rgb = interpolate(colors.light, colors.dark, intensity);
-      d.style.background = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
-      d.style.color = dimmed ? colors.dimmed : (norm > 0.4 ? colors.textHi : colors.textLo);
-      d.style.opacity = dimmed ? 0.5 : 1;
-      d.innerHTML = '<span class="pct">' + (w * 100).toFixed(0) + '%</span>';
-
-      d.onmouseenter = () => {
-        document.getElementById('highlight-info').innerHTML =
-          tex('\\alpha_{\\text{' + tokens[ri] + '} \\rightarrow \\text{' + tokens[ci] + '}}')
-          + ' = ' + (w * 100).toFixed(1) + '% \u2014 "' + tokens[ri] + '" presta il '
-          + (w * 100).toFixed(0) + '% di attenzione a "' + tokens[ci] + '"';
+    function getColors() {
+      const s = getComputedStyle(document.documentElement);
+      const get = (n) => s.getPropertyValue(n).trim();
+      const parseRGB = (v) => v.match(/\d+/g).map(Number);
+      return {
+        light: parseRGB(get('--purple-light')),
+        dark: parseRGB(get('--purple-dark')),
+        textHi: get('--purple-text-hi'),
+        textLo: get('--purple-text-lo'),
+        dimmed: get('--dimmed-text')
       };
-      d.onmouseleave = () => {
-        document.getElementById('highlight-info').innerHTML = '';
-      };
+    }
 
-      grid.appendChild(d);
-    });
-  });
+    function interpolate(c1, c2, t) {
+      return c1.map((v, i) => Math.round(v + t * (c2[i] - v)));
+    }
 
-  const lc = document.getElementById('legend-canvas');
-  const ctx = lc.getContext('2d');
-  for (let x = 0; x < 180; x++) {
-    const rgb = interpolate(colors.light, colors.dark, x / 179);
-    ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
-    ctx.fillRect(x, 0, 1, 14);
-  }
+    function render() {
+      const colors = getColors();
 
-  const nb = document.getElementById('note-box');
-  nb.innerHTML = '<b>Come leggere la matrice</b><br>'
-    + 'Ogni <b>riga</b> corrisponde a un token <b>query</b> \u2014 il token che "guarda" gli altri. '
-    + 'Ogni <b>colonna</b> corrisponde a un token <b>key</b> \u2014 il token che viene guardato.<br>'
-    + 'La cella (riga ' + tex('i') + ', colonna ' + tex('j') + ') contiene il peso '
-    + tex('\\alpha_{ij}') + ': quanta attenzione il token ' + tex('i')
-    + ' presta al token ' + tex('j') + '. '
-    + 'Ogni riga somma a 100% (distribuzione softmax).<br>'
-    + 'Colore pi\u00f9 intenso = attenzione maggiore.';
-}
+      document.getElementById('axis-row-label').innerHTML = 'Key (a chi presta attenzione) ' + tex('\\rightarrow');
+      document.getElementById('axis-col-label').innerHTML = tex('\\leftarrow') + ' Query (chi guarda)';
 
-render();
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
-</script>
+      const colLabels = document.getElementById('col-labels');
+      colLabels.innerHTML = '';
+      tokens.forEach(t => {
+        const d = document.createElement('div');
+        d.className = 'col-label';
+        d.textContent = t;
+        colLabels.appendChild(d);
+      });
+
+      const rowLabels = document.getElementById('row-labels');
+      rowLabels.innerHTML = '';
+      tokens.forEach((t, i) => {
+        const d = document.createElement('div');
+        d.className = 'row-label' + (i === activeRow ? ' active' : '');
+        d.textContent = t;
+        d.onclick = () => { activeRow = activeRow === i ? -1 : i; render(); };
+        rowLabels.appendChild(d);
+      });
+
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      const maxW = Math.max(...weights.flat());
+
+      tokens.forEach((_, ri) => {
+        tokens.forEach((_, ci) => {
+          const w = weights[ri][ci];
+          const norm = w / maxW;
+          const d = document.createElement('div');
+          d.className = 'cell';
+          const dimmed = activeRow >= 0 && activeRow !== ri;
+          const intensity = dimmed ? norm * 0.2 : norm;
+          const rgb = interpolate(colors.light, colors.dark, intensity);
+          d.style.background = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+          d.style.color = dimmed ? colors.dimmed : (norm > 0.4 ? colors.textHi : colors.textLo);
+          d.style.opacity = dimmed ? 0.5 : 1;
+          d.innerHTML = '<span class="pct">' + (w * 100).toFixed(0) + '%</span>';
+
+          d.onmouseenter = () => {
+            document.getElementById('highlight-info').innerHTML =
+              tex('\\alpha_{\\text{' + tokens[ri] + '} \\rightarrow \\text{' + tokens[ci] + '}}')
+              + ' = ' + (w * 100).toFixed(1) + '% \u2014 "' + tokens[ri] + '" presta il '
+              + (w * 100).toFixed(0) + '% di attenzione a "' + tokens[ci] + '"';
+          };
+          d.onmouseleave = () => {
+            document.getElementById('highlight-info').innerHTML = '';
+          };
+
+          grid.appendChild(d);
+        });
+      });
+
+      const lc = document.getElementById('legend-canvas');
+      const ctx = lc.getContext('2d');
+      for (let x = 0; x < 180; x++) {
+        const rgb = interpolate(colors.light, colors.dark, x / 179);
+        ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+        ctx.fillRect(x, 0, 1, 14);
+      }
+
+      const nb = document.getElementById('note-box');
+      nb.innerHTML = '<b>Come leggere la matrice</b><br>'
+        + 'Ogni <b>riga</b> corrisponde a un token <b>query</b> \u2014 il token che "guarda" gli altri. '
+        + 'Ogni <b>colonna</b> corrisponde a un token <b>key</b> \u2014 il token che viene guardato.<br>'
+        + 'La cella (riga ' + tex('i') + ', colonna ' + tex('j') + ') contiene il peso '
+        + tex('\\alpha_{ij}') + ': quanta attenzione il token ' + tex('i')
+        + ' presta al token ' + tex('j') + '. '
+        + 'Ogni riga somma a 100% (distribuzione softmax).<br>'
+        + 'Colore pi\u00f9 intenso = attenzione maggiore.';
+    }
+
+    render();
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+  </script>
 </body>
+
 </html>
