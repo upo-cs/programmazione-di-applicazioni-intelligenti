@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategie di decoding</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-50: #EEEDFE; --purple-200: #AFA9EC; --purple-600: #534AB7; --purple-800: #3C3489;
+  --teal-50: #E1F5EE; --teal-400: #1D9E75; --teal-600: #0F6E56; --teal-800: #085041;
+  --amber-50: #FAEEDA; --amber-400: #BA7517; --amber-600: #854F0B; --amber-800: #633806;
+  --coral-50: #FAECE7; --coral-400: #D85A30; --coral-600: #993C1D; --coral-800: #712B13;
+  --blue-50: #E6F1FB; --blue-400: #378ADD; --blue-600: #185FA5; --blue-800: #0C447C;
+  --red-50: #FCEBEB; --red-600: #A32D2D; --red-800: #791F1F;
+  --green-50: #EAF3DE; --green-600: #3B6D11; --green-800: #27500A;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg-page); color: var(--text-primary);
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  padding: 2rem 1rem;
+}
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+.sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; }
+.card-wrap {
+  background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: 12px;
+  padding: 1.5rem; max-width: 800px; width: 100%;
+}
+.card-wrap .katex { font-size: 1.1em; }
+.section-label { font-size: 14px; font-weight: 500; color: var(--text-tertiary); text-align: center; margin: 16px 0 8px; }
+
+.context-bar {
+  background: var(--bg-secondary); border-radius: 8px; padding: 10px 16px;
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px 0; flex-wrap: wrap;
+  font-size: 14px; color: var(--text-secondary);
+}
+.ctx-tok { padding: 4px 10px; border-radius: 6px; font-weight: 500; }
+.ctx-prompt { background: var(--teal-50); color: var(--teal-800); border: 1px solid var(--teal-600); }
+.ctx-gen { background: var(--purple-50); color: var(--purple-800); border: 1px solid var(--purple-600); }
+.ctx-arrow { color: var(--text-tertiary); font-size: 16px; }
+.ctx-next { padding: 4px 10px; border-radius: 6px; background: var(--amber-50); color: var(--amber-800); border: 1.5px dashed var(--amber-400); font-weight: 600; }
+
+.tabs { display: flex; justify-content: center; gap: 5px; margin: 14px 0; flex-wrap: wrap; }
+.tab {
+  padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: 1.5px solid var(--border-light); transition: all 0.2s;
+  background: var(--bg-secondary); color: var(--text-primary); user-select: none;
+}
+.tab:hover:not(.active) { border-color: var(--border-mid); }
+.tab.active { background: var(--purple-600); color: #fff; border-color: var(--purple-600); }
+
+.strategy-content { margin: 14px 0; }
+.formula-block {
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: 8px; padding: 12px 20px; margin: 10px auto; max-width: 620px; text-align: center;
+  overflow-x: auto;
+}
+.formula-block .katex { font-size: 1.2em; }
+
+.dist-chart { margin: 12px 0; }
+.dist-row {
+  display: flex; align-items: center; gap: 8px; padding: 4px 12px; margin: 2px 0;
+  border-radius: 6px; font-size: 13px; transition: all 0.25s;
+}
+.dist-row .word { min-width: 70px; font-weight: 500; }
+.dist-row .pct { min-width: 44px; text-align: right; font-weight: 600; }
+.dist-row .bar-wrap { flex: 1; height: 14px; background: var(--bg-secondary); border-radius: 7px; overflow: hidden; min-width: 80px; }
+.dist-row .bar { height: 100%; border-radius: 7px; transition: width 0.4s; }
+.dist-row .status { min-width: 20px; font-size: 14px; text-align: center; }
+.dist-row.selected { background: var(--purple-50); }
+.dist-row.eliminated { opacity: 0.3; }
+.dist-row.cutoff { border-top: 2px dashed var(--coral-400); padding-top: 6px; margin-top: 6px; }
+
+.slider-row {
+  display: flex; align-items: center; gap: 12px; justify-content: center; margin: 12px 0;
+  font-size: 14px;
+}
+.slider-row label { color: var(--text-secondary); font-weight: 500; min-width: 50px; text-align: right; }
+.slider-row input[type=range] { width: 200px; }
+.slider-row .val { font-weight: 600; min-width: 40px; color: var(--purple-600); }
+
+.pro-con { display: flex; gap: 12px; margin: 12px auto; max-width: 620px; flex-wrap: wrap; }
+.pro-card, .con-card {
+  flex: 1; min-width: 200px; border-radius: 8px; padding: 10px 14px;
+  font-size: 12px; line-height: 1.6;
+}
+.pro-card { background: var(--green-50); color: var(--green-800); }
+.con-card { background: var(--red-50); color: var(--red-800); }
+.pro-card b, .con-card b { font-size: 13px; }
+
+.note-box {
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: 8px; padding: 12px 16px; margin: 12px auto 0; max-width: 620px;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+}
+.note-box .katex { font-size: 1.0em; }
+
+.summary-table {
+  width: 100%; max-width: 660px; margin: 14px auto 0; border-collapse: separate;
+  border-spacing: 0; font-size: 12px; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+.summary-table th {
+  background: var(--bg-secondary); color: var(--text-primary); font-weight: 600;
+  padding: 8px 10px; text-align: left; font-size: 13px;
+}
+.summary-table td {
+  padding: 7px 10px; border-top: 1px solid var(--border-light); color: var(--text-secondary);
+}
+.summary-table tr:hover td { background: var(--purple-50); }
+</style>
+</head>
+<body>
+<h1>Strategie di decoding</h1>
+<p class="sub">Come si sceglie il prossimo token dalla distribuzione di probabilità</p>
+<div class="card-wrap">
+
+  <div class="section-label">La LM head produce una distribuzione — e adesso?</div>
+  <div class="context-bar">
+    <span class="ctx-tok ctx-prompt">Il</span>
+    <span class="ctx-tok ctx-prompt">gatto</span>
+    <span class="ctx-tok ctx-gen">si</span>
+    <span class="ctx-tok ctx-gen">sedette</span>
+    <span class="ctx-arrow">→ LM →</span>
+    <span class="ctx-next" id="ctx-next">???</span>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="strategy-content" id="content"></div>
+
+  <div class="section-label" style="margin-top:20px">Riepilogo: quale strategia usare?</div>
+  <table class="summary-table">
+    <tr><th>Task</th><th>Strategia</th><th>Perché</th></tr>
+    <tr><td>Codice, fatti, classificazione</td><td>T bassa / Greedy</td><td>Precisione, non varietà</td></tr>
+    <tr><td>Chat, assistenza</td><td>T=0.7 + Top-P 0.9</td><td>Bilanciamento naturale</td></tr>
+    <tr><td>Scrittura creativa</td><td>T alta + Top-P 0.95</td><td>Massima esplorazione</td></tr>
+    <tr><td>Traduzione, ASR</td><td>Beam Search</td><td>Coerenza di sequenza</td></tr>
+  </table>
+
+  <div class="note-box" style="margin-top:14px">
+    <b>Punto chiave</b>: la stessa conoscenza compressa nel modello può essere estratta in modi molto diversi.
+    Il decoding è l'ultimo miglio — non modifica il modello, ma cambia radicalmente il comportamento percepito.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const K = katex;
+const ro = { throwOnError: false };
+function tex(t) { return K.renderToString(t, ro); }
+function texBlock(el, t) { K.render(t, el, { throwOnError: false, displayMode: true }); }
+
+const baseDistribution = [
+  { word: 'sul', pct: 45 },
+  { word: 'vicino', pct: 15 },
+  { word: 'davanti', pct: 10 },
+  { word: 'sotto', pct: 8 },
+  { word: 'per', pct: 5 },
+  { word: 'nel', pct: 4 },
+  { word: 'sopra', pct: 3 },
+  { word: 'verso', pct: 2 },
+  { word: '...', pct: 8 }
+];
+
+const strategies = ['Greedy', 'Temperature', 'Top-K', 'Top-P', 'Beam Search'];
+let activeTab = 0;
+let tempVal = 1.0;
+let topkVal = 3;
+let toppVal = 0.9;
+
+function setupTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  strategies.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'tab' + (i === activeTab ? ' active' : '');
+    d.textContent = s;
+    d.onclick = () => { activeTab = i; render(); };
+    tabs.appendChild(d);
+  });
+}
+
+function applyTemperature(dist, T) {
+  if (T < 0.01) {
+    return dist.map((d, i) => {
+      if (d.word === '...') return { ...d, pct: 0 };
+      const isMax = d.pct === Math.max(...dist.filter(x => x.word !== '...').map(x => x.pct));
+      return { ...d, pct: isMax ? 100 : 0 };
+    });
+  }
+  const logits = dist.filter(d => d.word !== '...').map(d => Math.log(d.pct / 100 + 0.001));
+  const scaled = logits.map(l => l / T);
+  const maxS = Math.max(...scaled);
+  const exps = scaled.map(s => Math.exp(s - maxS));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  const probs = exps.map(e => e / sum);
+  const result = dist.filter(d => d.word !== '...').map((d, i) => ({ ...d, pct: Math.round(probs[i] * 100) }));
+  const total = result.reduce((a, b) => a + b.pct, 0);
+  if (total < 100) result[0].pct += (100 - total);
+  result.push({ word: '...', pct: 0 });
+  return result;
+}
+
+function render() {
+  setupTabs();
+  const content = document.getElementById('content');
+  let html = '';
+
+  if (activeTab === 0) {
+    document.getElementById('ctx-next').textContent = 'sul';
+    html += '<div class="formula-block" id="formula-greedy"></div>';
+    html += buildDistChart(baseDistribution, { selectMax: true });
+    html += '<div class="pro-con">'
+      + '<div class="pro-card"><b>Vantaggi</b><br>Deterministico e veloce<br>Sempre la risposta "più probabile"<br>Ideale per task fattuali</div>'
+      + '<div class="con-card"><b>Svantaggi</b><br>Ripetitivo e "piatto"<br>Nessuna creatività<br>Può entrare in loop</div>'
+      + '</div>';
+    html += '<div class="note-box">Analogia: scegliere sempre il piatto del giorno al ristorante. Sicuro, ma prevedibile.</div>';
+  }
+
+  else if (activeTab === 1) {
+    document.getElementById('ctx-next').textContent = '???';
+    html += '<div class="formula-block" id="formula-temp"></div>';
+    html += '<div class="slider-row">'
+      + '<label>T =</label>'
+      + '<input type="range" min="0.1" max="2.0" step="0.1" value="' + tempVal + '" id="temp-slider" oninput="updateTemp(this.value)">'
+      + '<span class="val" id="temp-val">' + tempVal.toFixed(1) + '</span>'
+      + '</div>';
+    const tempDist = applyTemperature(baseDistribution, tempVal);
+    html += buildDistChart(tempDist, { showAll: true });
+    const label = tempVal < 0.5 ? 'Quasi greedy' : tempVal < 0.9 ? 'Conservativo' : tempVal <= 1.1 ? 'Neutro (come addestrato)' : tempVal < 1.6 ? 'Creativo' : 'Molto caotico';
+    html += '<div class="note-box"><b>' + label + '</b> — ';
+    if (tempVal < 0.5) html += 'T bassa concentra quasi tutta la probabilità sul token più probabile. Utile per codice e fatti.';
+    else if (tempVal <= 1.1) html += 'T=1 usa la distribuzione esattamente come calcolata dal modello. Nessuna modifica.';
+    else html += 'T alta appiattisce la distribuzione: anche token improbabili diventano raggiungibili. Più varietà, più rischio di errori.';
+    html += '<br><b>Punto chiave</b>: T non aggiunge conoscenza — redistribuisce solo la probabilità già calcolata.</div>';
+  }
+
+  else if (activeTab === 2) {
+    document.getElementById('ctx-next').textContent = '???';
+    html += '<div class="formula-block" id="formula-topk"></div>';
+    html += '<div class="slider-row">'
+      + '<label>K =</label>'
+      + '<input type="range" min="1" max="8" step="1" value="' + topkVal + '" id="topk-slider" oninput="updateTopK(this.value)">'
+      + '<span class="val" id="topk-val">' + topkVal + '</span>'
+      + '</div>';
+    html += buildDistChart(baseDistribution, { topk: topkVal });
+    html += '<div class="pro-con">'
+      + '<div class="pro-card"><b>Vantaggi</b><br>Elimina token improbabili<br>Deterministico nel filtraggio<br>Veloce e semplice</div>'
+      + '<div class="con-card"><b>Svantaggi</b><br>K fisso non si adatta al contesto<br>Se il modello è sicuro (1 token al 95%), K=3 aggiunge rumore<br>Se è incerto, K=3 taglia opzioni valide</div>'
+      + '</div>';
+    html += '<div class="note-box">Analogia: "invita sempre i primi 5 amici della lista" — non importa se l\'occasione richiede 2 o 20 persone.</div>';
+  }
+
+  else if (activeTab === 3) {
+    document.getElementById('ctx-next').textContent = '???';
+    html += '<div class="formula-block" id="formula-topp"></div>';
+    html += '<div class="slider-row">'
+      + '<label>P =</label>'
+      + '<input type="range" min="0.5" max="1.0" step="0.05" value="' + toppVal + '" id="topp-slider" oninput="updateTopP(this.value)">'
+      + '<span class="val" id="topp-val">' + toppVal.toFixed(2) + '</span>'
+      + '</div>';
+    html += buildDistChart(baseDistribution, { topp: toppVal });
+    html += '<div class="pro-con">'
+      + '<div class="pro-card"><b>Vantaggi</b><br>Adattivo: pochi token se sicuro, molti se incerto<br>Standard dei chatbot moderni<br>Si combina bene con T</div>'
+      + '<div class="con-card"><b>Svantaggi</b><br>Un parametro in più da calibrare<br>Può essere troppo permissivo con P alto</div>'
+      + '</div>';
+    html += '<div class="note-box">Analogia: "invita amici finché la festa è abbastanza piena" — si adatta all\'occasione.<br>'
+      + '<b>Differenza con Top-K</b>: Top-K ha un numero fisso di candidati, Top-P ha una soglia di probabilità cumulativa fissa.</div>';
+  }
+
+  else if (activeTab === 4) {
+    document.getElementById('ctx-next').textContent = '...';
+    html += '<div class="formula-block" id="formula-beam"></div>';
+    html += '<div class="note-box">'
+      + '<b>Beam Search</b> non sceglie un singolo token — valuta <b>B sequenze</b> (beam) in parallelo.<br><br>'
+      + 'Esempio con beam width B=2 e prefisso "Il gatto si sedette":<br><br>'
+      + '<b>Beam 1</b>: "...sedette <b>sul tappeto</b>" — score: 0.45 × 0.30 = 0.135<br>'
+      + '<b>Beam 2</b>: "...sedette <b>vicino al</b>" — score: 0.15 × 0.28 = 0.042<br><br>'
+      + 'Ad ogni step, ogni beam si espande con i top token, poi si tengono solo i B migliori complessivi. '
+      + 'Alla fine si restituisce la sequenza con lo score totale più alto.'
+      + '</div>';
+    html += '<div class="pro-con">'
+      + '<div class="pro-card"><b>Vantaggi</b><br>Cerca la sequenza complessivamente migliore, non solo il token migliore<br>Ottimo per traduzione e ASR<br>Coerenza di sequenza</div>'
+      + '<div class="con-card"><b>Svantaggi</b><br>Costoso (memoria × beam width)<br>Output generico e "sicuro"<br>Poco usato nei chatbot moderni</div>'
+      + '</div>';
+  }
+
+  content.innerHTML = html;
+
+  if (activeTab === 0) {
+    const f = document.getElementById('formula-greedy');
+    if (f) texBlock(f, 'x_t = \\arg\\max_{x} \\; P(x \\mid x_1, \\ldots, x_{t-1})');
+  } else if (activeTab === 1) {
+    const f = document.getElementById('formula-temp');
+    if (f) texBlock(f, 'p_i = \\frac{\\exp(z_i / T)}{\\sum_j \\exp(z_j / T)}');
+  } else if (activeTab === 2) {
+    const f = document.getElementById('formula-topk');
+    if (f) texBlock(f, '\\text{Candidati} = \\text{top-}K \\text{ token per probabilità} \\;\\rightarrow\\; \\text{rinormalizza}');
+  } else if (activeTab === 3) {
+    const f = document.getElementById('formula-topp');
+    if (f) texBlock(f, '\\text{Somma cumulativa} \\geq P \\;\\rightarrow\\; \\text{STOP, rinormalizza i selezionati}');
+  } else if (activeTab === 4) {
+    const f = document.getElementById('formula-beam');
+    if (f) texBlock(f, '\\text{score}(y) = \\sum_{t=1}^{T} \\log P(y_t \\mid y_{<t}) \\quad \\text{(B sequenze in parallelo)}');
+  }
+}
+
+function buildDistChart(dist, opts) {
+  const maxPct = Math.max(...dist.map(d => d.pct));
+  let cumSum = 0;
+  let toppCutoff = -1;
+  if (opts.topp) {
+    for (let i = 0; i < dist.length; i++) {
+      if (dist[i].word === '...') continue;
+      cumSum += dist[i].pct;
+      if (cumSum >= opts.topp * 100 && toppCutoff < 0) { toppCutoff = i; }
+    }
+  }
+
+  let html = '<div class="dist-chart">';
+  dist.forEach((d, i) => {
+    if (d.word === '...' && d.pct === 0) return;
+    let cls = 'dist-row';
+    let barColor = 'var(--border-mid)';
+    let status = '';
+
+    if (opts.selectMax && d.pct === maxPct && d.word !== '...') {
+      cls += ' selected';
+      barColor = 'var(--purple-600)';
+      status = '←';
+    }
+
+    if (opts.topk !== undefined) {
+      if (i < opts.topk && d.word !== '...') {
+        cls += ' selected';
+        barColor = 'var(--purple-600)';
+        status = '✓';
+      } else {
+        cls += ' eliminated';
+        status = '✗';
+      }
+    }
+
+    if (opts.topp !== undefined) {
+      if (toppCutoff >= 0 && i <= toppCutoff && d.word !== '...') {
+        cls += ' selected';
+        barColor = 'var(--purple-600)';
+        status = '✓';
+      } else if (d.word !== '...') {
+        cls += ' eliminated';
+        status = '✗';
+      }
+    }
+
+    const barW = maxPct > 0 ? (d.pct / maxPct) * 100 : 0;
+    html += '<div class="' + cls + '">'
+      + '<span class="word">' + d.word + '</span>'
+      + '<span class="pct">' + d.pct + '%</span>'
+      + '<div class="bar-wrap"><div class="bar" style="width:' + barW + '%;background:' + barColor + '"></div></div>'
+      + '<span class="status">' + status + '</span>'
+      + '</div>';
+
+    if (opts.topp !== undefined && i === toppCutoff && d.word !== '...') {
+      html += '<div style="text-align:center;font-size:11px;color:var(--coral-600);margin:4px 0">↑ soglia P=' + opts.topp.toFixed(2) + ' raggiunta (cumulativa ≥ ' + Math.round(opts.topp * 100) + '%)</div>';
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
+window.updateTemp = function(v) {
+  tempVal = parseFloat(v);
+  document.getElementById('temp-val').textContent = tempVal.toFixed(1);
+  render();
+};
+window.updateTopK = function(v) {
+  topkVal = parseInt(v);
+  document.getElementById('topk-val').textContent = topkVal;
+  render();
+};
+window.updateTopP = function(v) {
+  toppVal = parseFloat(v);
+  document.getElementById('topp-val').textContent = toppVal.toFixed(2);
+  render();
+};
+
+render();
+</script>
+</body>
+</html>
