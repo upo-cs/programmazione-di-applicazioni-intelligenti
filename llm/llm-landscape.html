@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosa sono i Large Language Model (LLM)</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-50: #EEEDFE; --purple-200: #AFA9EC; --purple-600: #534AB7; --purple-800: #3C3489;
+  --teal-50: #E1F5EE; --teal-400: #1D9E75; --teal-600: #0F6E56; --teal-800: #085041;
+  --coral-50: #FAECE7; --coral-400: #D85A30; --coral-600: #993C1D; --coral-800: #712B13;
+  --amber-50: #FAEEDA; --amber-400: #BA7517; --amber-800: #633806;
+  --blue-50: #E6F1FB; --blue-400: #378ADD; --blue-800: #0C447C;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg-page); color: var(--text-primary);
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  padding: 2rem 1rem;
+}
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+.sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; }
+.card-wrap {
+  background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: 12px;
+  padding: 1.5rem; max-width: 800px; width: 100%;
+}
+.card-wrap .katex { font-size: 1.15em; }
+.section-label { font-size: 14px; font-weight: 500; color: var(--text-tertiary); text-align: center; margin: 16px 0 8px; }
+.chart-wrap { position: relative; width: 100%; height: 420px; margin: 12px 0; }
+.chart-wrap canvas { width: 100%; height: 100%; }
+.tooltip {
+  position: absolute; display: none; background: var(--bg-primary); border: 1px solid var(--border-light);
+  border-radius: 8px; padding: 10px 14px; font-size: 13px; pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10; max-width: 220px;
+}
+.tooltip .tt-name { font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.tooltip .tt-detail { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+.filter-row { display: flex; justify-content: center; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+.filter-btn {
+  padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1.5px solid var(--border-light); transition: all 0.2s;
+  background: var(--bg-secondary); color: var(--text-primary); user-select: none;
+}
+.filter-btn:hover { border-color: var(--border-mid); }
+.filter-btn.active { color: #fff; }
+.note-box {
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: 8px; padding: 14px 18px; margin: 14px auto 0; max-width: 680px;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+}
+.note-box .katex { font-size: 1.0em; }
+.callout {
+  background: var(--blue-50); border-left: 3px solid var(--blue-400); border-radius: 0 8px 8px 0;
+  padding: 12px 16px; margin: 14px auto 0; max-width: 680px;
+  font-size: 13px; color: var(--blue-800); line-height: 1.6;
+}
+.stats-row { display: flex; justify-content: center; gap: 12px; margin: 14px 0; flex-wrap: wrap; }
+.stat-card {
+  background: var(--bg-secondary); border-radius: 8px; padding: 12px 16px;
+  text-align: center; min-width: 130px; flex: 1; max-width: 180px;
+}
+.stat-card .stat-value { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.stat-card .stat-label { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+</style>
+</head>
+<body>
+<h1>Cosa sono i Large Language Model</h1>
+<p class="sub">L'evoluzione dei modelli linguistici: da milioni a trilioni di parametri</p>
+<div class="card-wrap">
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value">117M</div>
+      <div class="stat-label">GPT-1 (2018)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">175B</div>
+      <div class="stat-label">GPT-3 (2020)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">~1.8T</div>
+      <div class="stat-label">GPT-4 (2023)*</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">15.000x</div>
+      <div class="stat-label">crescita in 5 anni</div>
+    </div>
+  </div>
+
+  <div class="section-label">Numero di parametri dei principali LLM (scala logaritmica)</div>
+  <div class="filter-row" id="filters"></div>
+  <div class="chart-wrap">
+    <canvas id="chart"></canvas>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+
+  <div class="note-box" id="note-box"></div>
+
+  <div class="callout" id="callout"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const K = katex;
+const ro = { throwOnError: false };
+function tex(t) { return K.renderToString(t, ro); }
+
+const families = {
+  'OpenAI': { color: '#534AB7', bg: '#EEEDFE' },
+  'Google': { color: '#1D9E75', bg: '#E1F5EE' },
+  'Meta': { color: '#378ADD', bg: '#E6F1FB' },
+  'Anthropic': { color: '#D85A30', bg: '#FAECE7' },
+  'Altri': { color: '#888780', bg: '#F1EFE8' }
+};
+
+const models = [
+  { name: 'Transformer', year: 2017.5, params: 0.065, family: 'Google', note: 'Il paper originale' },
+  { name: 'GPT-1', year: 2018.5, params: 0.117, family: 'OpenAI', note: '117M parametri' },
+  { name: 'BERT Base', year: 2018.8, params: 0.11, family: 'Google', note: 'Encoder bidirezionale' },
+  { name: 'BERT Large', year: 2018.8, params: 0.34, family: 'Google', note: '340M parametri' },
+  { name: 'GPT-2', year: 2019.2, params: 1.5, family: 'OpenAI', note: '1.5B, "troppo pericoloso"' },
+  { name: 'T5', year: 2019.8, params: 11, family: 'Google', note: 'Encoder-decoder, 11B' },
+  { name: 'GPT-3', year: 2020.5, params: 175, family: 'OpenAI', note: '175B, few-shot learning' },
+  { name: 'PaLM', year: 2022.3, params: 540, family: 'Google', note: '540B parametri' },
+  { name: 'Chinchilla', year: 2022.3, params: 70, family: 'Google', note: '70B, scaling laws' },
+  { name: 'LLaMA', year: 2023.1, params: 65, family: 'Meta', note: '65B, open weights' },
+  { name: 'GPT-4', year: 2023.2, params: 1800, family: 'OpenAI', note: '~1.8T (MoE stimato)' },
+  { name: 'Claude 2', year: 2023.5, params: 130, family: 'Anthropic', note: 'Focus su sicurezza' },
+  { name: 'LLaMA 2', year: 2023.6, params: 70, family: 'Meta', note: '70B, open source' },
+  { name: 'Mixtral 8x7B', year: 2023.9, params: 46.7, family: 'Altri', note: 'MoE, Mistral AI' },
+  { name: 'Gemini Ultra', year: 2023.9, params: 1000, family: 'Google', note: 'Multimodale' },
+  { name: 'Claude 3 Opus', year: 2024.2, params: 200, family: 'Anthropic', note: 'N.1 in classifica' },
+  { name: 'LLaMA 3.1', year: 2024.5, params: 405, family: 'Meta', note: '405B, open weights' },
+  { name: 'Gemini 2.0', year: 2024.9, params: 1500, family: 'Google', note: 'Multimodale avanzato' },
+  { name: 'DeepSeek R1', year: 2025.0, params: 671, family: 'Altri', note: '671B, reasoning, open' },
+  { name: 'Claude 4 Opus', year: 2025.2, params: 350, family: 'Anthropic', note: 'Coding, ragionamento' },
+  { name: 'GPT-5', year: 2025.4, params: 2000, family: 'OpenAI', note: 'Reasoning avanzato' },
+  { name: 'LLaMA 4', year: 2025.3, params: 400, family: 'Meta', note: 'MoE, multimodale' },
+  { name: 'Gemini 3 Pro', year: 2025.8, params: 1800, family: 'Google', note: 'N.1 benchmark 2026' },
+];
+
+let activeFilters = new Set(Object.keys(families));
+
+function setupFilters() {
+  const row = document.getElementById('filters');
+  row.innerHTML = '';
+  Object.entries(families).forEach(([name, f]) => {
+    const d = document.createElement('div');
+    d.className = 'filter-btn' + (activeFilters.has(name) ? ' active' : '');
+    d.style.borderColor = activeFilters.has(name) ? f.color : '';
+    d.style.background = activeFilters.has(name) ? f.color : '';
+    d.style.color = activeFilters.has(name) ? '#fff' : '';
+    d.textContent = name;
+    d.onclick = () => {
+      if (activeFilters.has(name)) activeFilters.delete(name);
+      else activeFilters.add(name);
+      setupFilters();
+      drawChart();
+    };
+    row.appendChild(d);
+  });
+}
+
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+let pointPositions = [];
+
+function drawChart() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+
+  const pad = { top: 30, right: 30, bottom: 50, left: 70 };
+  const w = rect.width - pad.left - pad.right;
+  const h = rect.height - pad.top - pad.bottom;
+
+  const minYear = 2017, maxYear = 2026;
+  const minLog = -1.5, maxLog = 3.5;
+
+  function xPos(year) { return pad.left + ((year - minYear) / (maxYear - minYear)) * w; }
+  function yPos(logP) { return pad.top + h - ((logP - minLog) / (maxLog - minLog)) * h; }
+
+  ctx.strokeStyle = '#e5e4df';
+  ctx.lineWidth = 0.5;
+  ctx.font = '11px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#888780';
+  ctx.textAlign = 'center';
+
+  for (let y = minYear; y <= maxYear; y++) {
+    const x = xPos(y);
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + h); ctx.stroke();
+    ctx.fillText(y, x, pad.top + h + 20);
+  }
+
+  ctx.textAlign = 'right';
+  const logLabels = [
+    { log: -1, label: '100M' }, { log: 0, label: '1B' }, { log: 1, label: '10B' },
+    { log: 2, label: '100B' }, { log: 3, label: '1T' }
+  ];
+  logLabels.forEach(l => {
+    const y = yPos(l.log);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+    ctx.fillText(l.label, pad.left - 8, y + 4);
+  });
+
+  ctx.fillStyle = '#888780';
+  ctx.textAlign = 'center';
+  ctx.font = '12px DM Sans, system-ui, sans-serif';
+  ctx.fillText('Anno', pad.left + w / 2, pad.top + h + 42);
+
+  ctx.save();
+  ctx.translate(18, pad.top + h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Parametri', 0, 0);
+  ctx.restore();
+
+  pointPositions = [];
+
+  const filtered = models.filter(m => activeFilters.has(m.family));
+
+  filtered.forEach(m => {
+    const logP = Math.log10(m.params);
+    const x = xPos(m.year);
+    const y = yPos(logP);
+    const f = families[m.family];
+    const r = 6;
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = f.color;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x, y, r + 2, 0, Math.PI * 2);
+    ctx.strokeStyle = f.color;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.25;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    const labelY = logP > 2.5 ? y + 18 : y - 12;
+    ctx.font = '11px DM Sans, system-ui, sans-serif';
+    ctx.fillStyle = '#2c2c2a';
+    ctx.textAlign = 'center';
+
+    const nearbyAbove = filtered.some(other =>
+      other !== m && Math.abs(xPos(other.year) - x) < 50 && Math.abs(yPos(Math.log10(other.params)) - y) < 25
+      && Math.log10(other.params) > logP
+    );
+    const finalLabelY = nearbyAbove ? y + 18 : labelY;
+
+    ctx.fillText(m.name, x, finalLabelY);
+
+    pointPositions.push({ x, y, r: 10, model: m });
+  });
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  let found = null;
+  for (const p of pointPositions) {
+    const dx = mx - p.x, dy = my - p.y;
+    if (dx * dx + dy * dy < p.r * p.r) { found = p; break; }
+  }
+
+  if (found) {
+    const m = found.model;
+    const f = families[m.family];
+    tooltip.style.display = 'block';
+    tooltip.style.left = (found.x + 14) + 'px';
+    tooltip.style.top = (found.y - 20) + 'px';
+    tooltip.innerHTML = '<div class="tt-name" style="color:' + f.color + '">' + m.name + '</div>'
+      + '<div class="tt-detail">' + formatParams(m.params) + ' parametri<br>'
+      + Math.floor(m.year) + ' — ' + m.family + '<br>'
+      + m.note + '</div>';
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+
+canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+function formatParams(b) {
+  if (b >= 1000) return (b / 1000).toFixed(1) + 'T';
+  if (b >= 1) return Math.round(b) + 'B';
+  return Math.round(b * 1000) + 'M';
+}
+
+const nb = document.getElementById('note-box');
+nb.innerHTML = '<b>Cosa rende un Language Model "Large"</b><br>'
+  + 'Non esiste una soglia ufficiale, ma in pratica si parla di LLM quando il modello ha <b>miliardi di parametri</b> '
+  + 'ed è stato addestrato su <b>trilioni di token</b> da web, libri, codice e conversazioni. '
+  + 'L\'architettura è la stessa self-attention che abbiamo studiato — la differenza è quantitativa, non qualitativa.<br><br>'
+  + '<b>Tendenze recenti (2024-2025)</b>:<br>'
+  + '&bull; I modelli più grandi superano i 1.000 miliardi di parametri (GPT-4, Gemini Ultra)<br>'
+  + '&bull; Mixture of Experts (MoE): modelli con molti parametri totali ma che ne attivano solo una frazione per ogni token (es. Mixtral, DeepSeek R1)<br>'
+  + '&bull; Modelli open-weight competitivi: LLaMA, DeepSeek, Qwen sfidano i modelli proprietari<br>'
+  + '&bull; Reasoning models: catene di pensiero esplicite prima della risposta (o1, R1, Claude con extended thinking)<br>'
+  + '&bull; La dimensione non è tutto — Chinchilla (70B) ha dimostrato che più dati con meno parametri può battere modelli più grandi';
+
+const callout = document.getElementById('callout');
+callout.innerHTML = '<b>Il paradosso degli LLM</b>: un task semplice (predire la prossima parola) '
+  + '+ scala enorme = capacità sorprendenti. Few-shot learning, ragionamento multi-step, '
+  + 'scrittura di codice, traduzione — tutto emerge da ' + tex('P(x_t \\mid x_1, \\ldots, x_{t-1})')
+  + ' applicato con miliardi di parametri su trilioni di dati. '
+  + '<i>* I conteggi dei parametri per i modelli proprietari (GPT-4, Gemini) sono stime non ufficiali.</i>';
+
+setupFilters();
+drawChart();
+window.addEventListener('resize', drawChart);
+</script>
+</body>
+</html>
