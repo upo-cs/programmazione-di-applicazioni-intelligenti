@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inferenza autoregressiva</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-50: #EEEDFE; --purple-600: #534AB7; --purple-800: #3C3489;
+  --teal-50: #E1F5EE; --teal-400: #1D9E75; --teal-600: #0F6E56; --teal-800: #085041;
+  --amber-50: #FAEEDA; --amber-400: #BA7517; --amber-600: #854F0B; --amber-800: #633806;
+  --coral-50: #FAECE7; --coral-400: #D85A30; --coral-600: #993C1D; --coral-800: #712B13;
+  --red-50: #FCEBEB; --red-600: #A32D2D; --red-800: #791F1F;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg-page); color: var(--text-primary);
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  padding: 2rem 1rem;
+}
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+.sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; }
+.card-wrap {
+  background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: 12px;
+  padding: 1.5rem; max-width: 780px; width: 100%;
+}
+.card-wrap .katex { font-size: 1.15em; }
+.section-label { font-size: 14px; font-weight: 500; color: var(--text-tertiary); text-align: center; margin: 16px 0 8px; }
+
+.controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 14px 0; }
+.ctrl-btn {
+  padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
+  cursor: pointer; border: 1.5px solid var(--border-light); transition: all 0.2s;
+  background: var(--bg-secondary); color: var(--text-primary); user-select: none;
+}
+.ctrl-btn:hover:not(:disabled) { border-color: var(--border-mid); }
+.ctrl-btn:disabled { opacity: 0.3; cursor: default; }
+.ctrl-btn.primary { background: var(--purple-600); color: #fff; border-color: var(--purple-600); }
+.ctrl-btn.primary:hover:not(:disabled) { background: var(--purple-800); border-color: var(--purple-800); }
+.step-indicator { font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center; }
+
+.steps-area { margin: 16px 0; }
+.step-row {
+  display: flex; align-items: center; gap: 0; margin: 6px 0; padding: 8px 0;
+  border-radius: 8px; transition: all 0.3s;
+}
+.step-row.active { background: var(--purple-50); }
+.step-row.past { opacity: 1; }
+.step-row.future { opacity: 0.25; }
+.step-label {
+  font-size: 13px; font-weight: 600; color: var(--text-tertiary); min-width: 60px;
+  text-align: right; padding-right: 10px;
+}
+.step-row.active .step-label { color: var(--purple-600); }
+.input-section { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; }
+.tok-box {
+  padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  margin: 0 1px; white-space: nowrap; transition: all 0.3s;
+}
+.tok-prompt { background: var(--teal-50); color: var(--teal-800); border: 1px solid var(--teal-600); }
+.tok-generated { background: var(--purple-50); color: var(--purple-800); border: 1px solid var(--purple-600); }
+.tok-new { background: var(--amber-50); color: var(--amber-800); border: 1.5px dashed var(--amber-400); }
+.arrow-sep {
+  display: flex; align-items: center; padding: 0 6px; color: var(--border-mid); font-size: 18px;
+}
+.lm-mini {
+  background: var(--amber-50); border: 1.5px solid var(--amber-400); border-radius: 8px;
+  padding: 6px 12px; font-size: 11px; font-weight: 600; color: var(--amber-800);
+  white-space: nowrap;
+}
+.output-tok {
+  padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  background: var(--amber-50); color: var(--amber-800); border: 1.5px solid var(--amber-400);
+  margin-left: 2px;
+}
+
+.stateless-box {
+  background: var(--red-50); border: 1px solid var(--red-600); border-radius: 8px;
+  padding: 12px 16px; margin: 14px auto 0; max-width: 600px;
+  font-size: 13px; color: var(--red-800); line-height: 1.6; text-align: center;
+}
+
+.note-box {
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: 8px; padding: 14px 18px; margin: 14px auto 0; max-width: 620px;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+}
+.note-box .katex { font-size: 1.0em; }
+
+.stop-conditions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin: 14px auto 0; max-width: 620px;
+}
+.stop-card {
+  background: var(--bg-secondary); border-radius: 8px; padding: 10px 14px;
+  font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+}
+.stop-card .stop-title { font-weight: 600; color: var(--text-primary); margin-bottom: 2px; font-size: 13px; }
+.stop-card code { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: 4px; padding: 1px 5px; font-size: 11px; }
+
+.legend-row { display: flex; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+.formula-block {
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: 8px; padding: 12px 20px; margin: 12px auto; max-width: 600px; text-align: center;
+}
+.formula-block .katex { font-size: 1.25em; }
+</style>
+</head>
+<body>
+<h1>Inferenza autoregressiva</h1>
+<p class="sub">Il modello genera un token alla volta, senza memoria tra le chiamate</p>
+<div class="card-wrap">
+
+  <div class="controls">
+    <div class="ctrl-btn" id="btn-prev" onclick="prev()">← Indietro</div>
+    <div class="step-indicator" id="step-ind"></div>
+    <div class="ctrl-btn primary" id="btn-next" onclick="next()">Avanti →</div>
+    <div class="ctrl-btn" onclick="reset()" style="margin-left:8px">Reset</div>
+  </div>
+
+  <div class="steps-area" id="steps-area"></div>
+
+  <div class="formula-block" id="formula"></div>
+
+  <div class="stateless-box" id="stateless-box"></div>
+
+  <div class="note-box" id="note-box"></div>
+
+  <div class="section-label" style="margin-top:18px">Condizioni di stop</div>
+  <div class="stop-conditions">
+    <div class="stop-card">
+      <div class="stop-title">Token di fine sequenza (EOS)</div>
+      Il modello genera <code>&lt;end_of_turn&gt;</code> — segnala che la risposta è completa
+    </div>
+    <div class="stop-card">
+      <div class="stop-title">Lunghezza massima</div>
+      Raggiunto il limite <code>max_tokens</code> — la risposta viene troncata
+    </div>
+    <div class="stop-card">
+      <div class="stop-title">Context window piena</div>
+      Prompt + risposta superano la finestra di contesto del modello
+    </div>
+    <div class="stop-card">
+      <div class="stop-title">Criteri personalizzati</div>
+      Sequenze di stop definite dall'utente o dall'applicazione
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--teal-50);border:1px solid var(--teal-600)"></div>Prompt (input utente)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple-50);border:1px solid var(--purple-600)"></div>Token già generati</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--amber-50);border:1.5px dashed var(--amber-400)"></div>Token appena predetto</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const K = katex;
+const ro = { throwOnError: false };
+function tex(t) { return K.renderToString(t, ro); }
+function texBlock(el, t) { K.render(t, el, { throwOnError: false, displayMode: true }); }
+
+const prompt = ["Il", "gatto"];
+const generated = ["si", "sedette", "sul", "tappeto"];
+const totalSteps = generated.length;
+let step = 0;
+
+function next() { if (step < totalSteps) { step++; render(); } }
+function prev() { if (step > 0) { step--; render(); } }
+function reset() { step = 0; render(); }
+
+function render() {
+  document.getElementById('btn-prev').disabled = step === 0;
+  document.getElementById('btn-next').disabled = step === totalSteps;
+  document.getElementById('step-ind').textContent = step === 0 ? 'Pronto' : 'Step ' + step + ' / ' + totalSteps;
+
+  const area = document.getElementById('steps-area');
+  area.innerHTML = '';
+
+  for (let s = 1; s <= totalSteps; s++) {
+    const row = document.createElement('div');
+    const isActive = s === step;
+    const isPast = s < step;
+    const isFuture = s > step;
+    row.className = 'step-row' + (isActive ? ' active' : '') + (isPast ? ' past' : '') + (isFuture ? ' future' : '');
+
+    let html = '<div class="step-label">Step ' + s + '</div>';
+    html += '<div class="input-section">';
+
+    prompt.forEach(t => {
+      html += '<div class="tok-box tok-prompt">' + t + '</div>';
+    });
+
+    for (let g = 0; g < s - 1; g++) {
+      html += '<div class="tok-box tok-generated">' + generated[g] + '</div>';
+    }
+
+    html += '<div class="arrow-sep">→</div>';
+    html += '<div class="lm-mini">LM</div>';
+    html += '<div class="arrow-sep">→</div>';
+
+    if (s <= step) {
+      html += '<div class="output-tok">' + generated[s - 1] + '</div>';
+    } else {
+      html += '<div class="output-tok" style="opacity:0.3">???</div>';
+    }
+
+    html += '</div>';
+    row.innerHTML = html;
+    area.appendChild(row);
+  }
+
+  const formulaEl = document.getElementById('formula');
+  if (step === 0) {
+    texBlock(formulaEl, '\\text{Prompt: } \\underbrace{\\text{"Il"},\\;\\text{"gatto"}}_{\\text{input utente}} \\;\\rightarrow\\; \\text{LM} \\;\\rightarrow\\; x_3\\text{?}');
+  } else {
+    const allCtx = prompt.concat(generated.slice(0, step));
+    const short = allCtx.length <= 4
+      ? allCtx.map(t => '\\text{"' + t + '"}').join(',\\;')
+      : '\\text{"' + allCtx[0] + '"},\\;\\ldots,\\;\\text{"' + allCtx[allCtx.length - 1] + '"}';
+    const nextIdx = prompt.length + step;
+    if (step < totalSteps) {
+      texBlock(formulaEl, '\\underbrace{' + short + '}_{\\text{' + allCtx.length + ' token in input}} \\;\\rightarrow\\; \\text{LM} \\;\\rightarrow\\; x_{' + (nextIdx + 1) + '}\\text{?}');
+    } else {
+      texBlock(formulaEl, '\\underbrace{' + short + '}_{\\text{sequenza completa}} \\;\\rightarrow\\; \\text{STOP}');
+    }
+  }
+
+  const sb = document.getElementById('stateless-box');
+  if (step === 0) {
+    sb.innerHTML = '<b>Stateless</b>: il modello non ha memoria tra le chiamate. '
+      + 'Ad ogni step, riceve l\'<b>intera sequenza</b> (prompt + tutti i token generati finora) come se fosse la prima volta.';
+  } else if (step < totalSteps) {
+    const inputLen = prompt.length + step;
+    sb.innerHTML = '<b>Step ' + step + '</b>: il modello ha appena prodotto "<b>' + generated[step - 1] + '</b>". '
+      + 'Al prossimo step, riceverà tutti i <b>' + inputLen + ' token</b> in input — non ricorda di averli già visti. '
+      + 'L\'intero contesto viene rielaborato da zero (nessun backtracking: la scelta è irreversibile).';
+  } else {
+    sb.innerHTML = '<b>Generazione completa</b>: "Il gatto si sedette sul tappeto". '
+      + 'Il modello ha fatto <b>4 chiamate separate</b>, ognuna con input crescente. '
+      + 'Nessuna delle 4 chiamate "sapeva" cosa avrebbero prodotto le successive.';
+  }
+
+  const nb = document.getElementById('note-box');
+  if (step === 0) {
+    nb.innerHTML = '<b>Come funziona l\'inferenza</b><br>'
+      + 'L\'utente fornisce un prompt ("Il gatto"). Il modello genera la risposta <b>un token alla volta</b>, '
+      + 'usando la causal self-attention per guardare tutto il contesto precedente. '
+      + 'Ogni token predetto viene aggiunto all\'input per lo step successivo.';
+  } else if (step === 1) {
+    nb.innerHTML = '<b>Step 1</b>: input = ["Il", "gatto"] → il modello predice "si". '
+      + 'Il contesto è solo il prompt — la predizione è basata unicamente su queste 2 parole. '
+      + 'Notare: il modello poteva scegliere "nero", "dorme", "corre"... la scelta è probabilistica.';
+  } else if (step === 2) {
+    nb.innerHTML = '<b>Step 2</b>: input = ["Il", "gatto", "si"] → predice "sedette". '
+      + 'Ora il contesto include "si" (generato al passo precedente). '
+      + 'Il modello <b>non ricorda</b> di aver generato "si" — lo vede come parte dell\'input, indistinguibile dal prompt.';
+  } else if (step === 3) {
+    nb.innerHTML = '<b>Step 3</b>: input = ["Il", "gatto", "si", "sedette"] → predice "sul". '
+      + 'L\'input cresce ad ogni step. Il costo computazionale cresce come ' + tex('O(n^2)')
+      + ' per via della self-attention su tutta la sequenza.';
+  } else {
+    nb.innerHTML = '<b>Step 4</b>: input = ["Il", "gatto", "si", "sedette", "sul"] → predice "tappeto". '
+      + 'La generazione si ferma (in questo esempio, per EOS o max_tokens). '
+      + '<br><br><b>Nota importante</b>: nessuna condizione di stop garantisce che la risposta sia <i>completa</i> o <i>corretta</i> '
+      + '— il modello non ha un concetto di "ho finito di ragionare".';
+  }
+}
+
+render();
+</script>
+</body>
+</html>
