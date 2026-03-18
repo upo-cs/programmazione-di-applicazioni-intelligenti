@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grouped-Query Attention (GQA) — Infografica</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-50: #EEEDFE; --purple-100: #DEDCFD; --purple-200: #B8B4F5;
+  --purple-600: #534AB7; --purple-800: #3C3489;
+  --teal-50: #E1F5EE; --teal-100: #C3EBD9;
+  --teal-600: #0F6E56; --teal-800: #085041;
+  --coral-50: #FAECE7; --coral-100: #F5D9CF;
+  --coral-600: #993C1D; --coral-800: #712B13;
+  --amber-50: #FFF8E1; --amber-100: #FFECB3;
+  --amber-600: #F57F17; --amber-800: #E65100;
+  --blue-50: #E3F2FD; --blue-100: #BBDEFB; --blue-200: #90CAF9;
+  --blue-600: #1565C0; --blue-800: #0D47A1;
+  --green-50: #E8F5E9; --green-100: #C8E6C9;
+  --green-600: #2E7D32; --green-800: #1B5E20;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-page);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  display: flex; justify-content: center;
+  padding: 24px 16px; min-height: 100vh;
+}
+
+.wrap { max-width: 760px; width: 100%; }
+.wrap .katex { font-size: 1.15em; }
+.formula-block .katex { font-size: 1.35em; }
+
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 32px 28px;
+  margin-bottom: 16px;
+}
+
+h1 { font-weight: 700; font-size: 28px; line-height: 1.3; margin-bottom: 6px; }
+h2 { font-weight: 700; font-size: 20px; margin-bottom: 14px; }
+h3 { font-weight: 700; font-size: 17px; margin-bottom: 8px; }
+
+.subtitle {
+  font-size: 15px; font-weight: 400; color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.stage-label {
+  font-weight: 500; font-size: 14px; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+}
+
+/* ── Spectrum diagram ── */
+.spectrum {
+  display: flex; align-items: stretch; gap: 0;
+  margin: 20px 0 10px; border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+.spectrum-segment {
+  flex: 1; padding: 16px 10px; text-align: center;
+  cursor: pointer; transition: all 0.3s ease;
+  position: relative;
+}
+
+.spectrum-segment.mha-seg { background: var(--purple-50); }
+.spectrum-segment.gqa-seg { background: var(--blue-50); }
+.spectrum-segment.mqa-seg { background: var(--teal-50); }
+
+.spectrum-segment.active.mha-seg { background: var(--purple-100); }
+.spectrum-segment.active.gqa-seg { background: var(--blue-100); }
+.spectrum-segment.active.mqa-seg { background: var(--teal-100); }
+
+.spectrum-segment h3 { margin-bottom: 4px; }
+.spectrum-segment.mha-seg h3 { color: var(--purple-800); }
+.spectrum-segment.gqa-seg h3 { color: var(--blue-800); }
+.spectrum-segment.mqa-seg h3 { color: var(--teal-800); }
+
+.spectrum-detail {
+  font-size: 12px; color: var(--text-tertiary); font-weight: 500;
+}
+
+.spectrum-arrow {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 0 0 16px; padding: 0 4px;
+}
+
+.arrow-label {
+  font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+.arrow-line {
+  flex: 1; height: 2px; background: var(--border-mid); margin: 0 10px;
+  position: relative;
+}
+
+.arrow-line::after {
+  content: '→'; position: absolute; right: -14px; top: -9px;
+  font-size: 14px; color: var(--border-mid);
+}
+
+/* ── Architecture canvas ── */
+.arch-canvas-wrap {
+  margin: 20px 0 16px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 20px 12px 16px;
+  text-align: center;
+}
+
+.arch-canvas-wrap canvas {
+  width: 100%; display: block;
+}
+
+.arch-canvas-title {
+  font-weight: 600; font-size: 15px; color: var(--blue-800);
+  margin-bottom: 12px;
+}
+
+/* ── Group configurator ── */
+.config-area { margin: 16px 0; }
+
+.config-controls {
+  display: flex; gap: 24px; align-items: center;
+  justify-content: center; flex-wrap: wrap; margin-bottom: 20px;
+}
+
+.config-group {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.config-group label {
+  font-size: 14px; font-weight: 500; color: var(--text-secondary);
+}
+
+.config-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 140px; height: 6px; border-radius: 3px;
+  background: var(--border-light); outline: none;
+}
+
+.config-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--blue-600); cursor: pointer;
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.config-value {
+  font-weight: 700; font-size: 16px; min-width: 28px; text-align: center;
+  color: var(--blue-800);
+}
+
+/* ── Group visualization ── */
+.groups-vis {
+  display: flex; justify-content: center; gap: 12px;
+  flex-wrap: wrap; margin: 16px 0;
+}
+
+.group-box {
+  border-radius: 10px; padding: 12px 10px; text-align: center;
+  border: 2px solid transparent; transition: all 0.3s ease;
+  min-width: 80px;
+}
+
+.group-box:hover { transform: translateY(-2px); box-shadow: 0 3px 12px rgba(0,0,0,0.06); }
+
+.group-label {
+  font-size: 11px; font-weight: 600; margin-bottom: 8px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+.group-q-row {
+  display: flex; gap: 3px; justify-content: center; margin-bottom: 6px;
+}
+
+.g-cell {
+  width: 38px; height: 22px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600; color: #fff;
+}
+
+.g-cell.q { background: var(--purple-600); }
+
+.g-kv-row {
+  display: flex; flex-direction: column; gap: 3px; align-items: stretch;
+}
+
+.g-cell.k { background: var(--teal-600); }
+.g-cell.v { background: var(--coral-600); }
+
+.group-connector {
+  display: flex; justify-content: center; margin: 3px 0;
+}
+
+.connector-lines {
+  width: 24px; height: 12px; position: relative;
+}
+
+/* ── Stats ── */
+.stats-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;
+  margin-top: 16px;
+}
+
+.stat-box {
+  border-radius: 8px; padding: 12px 8px; text-align: center;
+}
+
+.stat-box.purple { background: var(--purple-50); }
+.stat-box.teal { background: var(--teal-50); }
+.stat-box.blue { background: var(--blue-50); }
+.stat-box.green { background: var(--green-50); }
+
+.stat-number { font-weight: 700; font-size: 20px; line-height: 1.2; }
+.stat-box.purple .stat-number { color: var(--purple-800); }
+.stat-box.teal .stat-number { color: var(--teal-800); }
+.stat-box.blue .stat-number { color: var(--blue-800); }
+.stat-box.green .stat-number { color: var(--green-800); }
+
+.stat-label {
+  font-size: 11px; font-weight: 500; color: var(--text-tertiary); margin-top: 2px;
+}
+
+/* ── Tradeoff chart ── */
+.tradeoff-area {
+  position: relative; margin: 20px 0 8px;
+}
+
+.tradeoff-area canvas { width: 100%; display: block; }
+
+/* ── Explain panel ── */
+.explain-panel {
+  background: var(--bg-secondary); border-radius: 10px;
+  padding: 16px 20px; margin-top: 16px;
+}
+
+.explain-panel .label {
+  font-weight: 600; font-size: 14px; color: var(--blue-600); margin-bottom: 4px;
+}
+
+.explain-panel p {
+  font-size: 15px; font-weight: 400; line-height: 1.6; color: var(--text-secondary);
+}
+
+/* ── Step walkthrough ── */
+.step-row {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 0; border-bottom: 1px solid var(--border-light);
+}
+
+.step-row:last-child { border-bottom: none; }
+
+.step-num {
+  width: 32px; height: 32px; min-width: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px;
+  background: var(--blue-600); color: #fff;
+}
+
+.step-content h4 {
+  font-weight: 600; font-size: 15px; margin-bottom: 3px; color: var(--text-primary);
+}
+
+.step-content p {
+  font-size: 14px; line-height: 1.55; color: var(--text-secondary);
+}
+
+.formula-inline { margin-top: 6px; }
+
+/* ── Insight ── */
+.insight {
+  display: flex; gap: 12px; align-items: flex-start;
+  border-radius: 10px; padding: 16px 18px; margin-top: 16px;
+}
+
+.insight.amber { background: var(--amber-50); border: 1px solid var(--amber-100); }
+.insight.blue { background: var(--blue-50); border: 1px solid var(--blue-100); }
+.insight.green { background: var(--green-50); border: 1px solid var(--green-100); }
+
+.insight-icon { font-size: 20px; flex-shrink: 0; line-height: 1.4; }
+.insight p { font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+
+/* ── Model table ── */
+.model-table {
+  width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 14px;
+}
+
+.model-table th {
+  text-align: left; padding: 10px 12px; font-weight: 600; font-size: 12px;
+  color: var(--text-tertiary); border-bottom: 2px solid var(--border-light);
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+.model-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+.model-table tr:last-child td { border-bottom: none; }
+
+.model-table .highlight-row td {
+  background: var(--blue-50);
+  font-weight: 500;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .card { padding: 20px 16px; }
+  h1 { font-size: 24px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .spectrum-segment { padding: 12px 6px; }
+  .spectrum-segment h3 { font-size: 14px; }
+  .g-cell { width: 32px; height: 18px; font-size: 9px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="card">
+    <h1>Grouped-Query Attention (GQA)</h1>
+    <p class="subtitle">Il compromesso ideale: le Query head vengono raggruppate e ogni gruppo condivide una coppia K, V. Quasi la stessa qualità di MHA, una frazione della memoria.</p>
+  </div>
+
+  <!-- Stage 1: Spectrum -->
+  <div class="card">
+    <div class="stage-label">Stage 1 — GQA nello spettro MHA ↔ MQA</div>
+    <h2>Un continuum di configurazioni</h2>
+    <p class="subtitle" style="margin-bottom:12px;">GQA generalizza sia MHA che MQA. Clicca su un segmento per i dettagli.</p>
+
+    <div class="spectrum-arrow">
+      <span class="arrow-label">Più espressivo</span>
+      <div class="arrow-line"></div>
+      <span class="arrow-label">Più efficiente</span>
+    </div>
+
+    <div class="spectrum" id="spectrum">
+      <div class="spectrum-segment mha-seg active" data-type="mha" onclick="selectSpectrum('mha')">
+        <h3>MHA</h3>
+        <div class="spectrum-detail">g = h</div>
+        <div class="spectrum-detail">Ogni head ha K, V proprie</div>
+      </div>
+      <div class="spectrum-segment gqa-seg" data-type="gqa" onclick="selectSpectrum('gqa')">
+        <h3>GQA</h3>
+        <div class="spectrum-detail">1 &lt; g &lt; h</div>
+        <div class="spectrum-detail">Gruppi di head condividono K, V</div>
+      </div>
+      <div class="spectrum-segment mqa-seg" data-type="mqa" onclick="selectSpectrum('mqa')">
+        <h3>MQA</h3>
+        <div class="spectrum-detail">g = 1</div>
+        <div class="spectrum-detail">Tutte condividono 1 K, V</div>
+      </div>
+    </div>
+
+    <div class="explain-panel" id="spectrumExplain">
+      <div class="label">MHA — g = h (caso limite sinistro)</div>
+      <p>Ogni attention head ha le proprie matrici K e V: massima espressività, massimo costo in memoria. Corrisponde a GQA con <em>g</em> = <em>h</em> gruppi (un "gruppo" per head).</p>
+    </div>
+  </div>
+
+  <!-- Stage 2: Interactive architecture -->
+  <div class="card">
+    <div class="stage-label">Stage 2 — L'architettura nel dettaglio</div>
+    <h2>Come le Query head vengono raggruppate</h2>
+
+    <div class="config-area">
+      <div class="config-controls">
+        <div class="config-group">
+          <label>Query head (h):</label>
+          <input type="range" class="config-slider" id="sliderH" min="4" max="16" value="8" step="4">
+          <span class="config-value" id="valH">8</span>
+        </div>
+        <div class="config-group">
+          <label>Gruppi KV (g):</label>
+          <input type="range" class="config-slider" id="sliderG" min="1" max="8" value="2" step="1">
+          <span class="config-value" id="valG">2</span>
+        </div>
+      </div>
+
+      <div class="groups-vis" id="groupsVis"></div>
+
+      <div class="stats-row" id="statsRow"></div>
+
+      <div class="explain-panel" id="configExplain" style="margin-top:14px;">
+        <div class="label">GQA-2 con 8 head</div>
+        <p>8 Query head divise in 2 gruppi da 4. Ogni gruppo condivide una coppia K, V. La cache è 4× più piccola rispetto a MHA.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 3: Step-by-step -->
+  <div class="card">
+    <div class="stage-label">Stage 3 — Passo per passo</div>
+    <h2>Come calcola l'attenzione GQA</h2>
+    <p class="subtitle" style="margin-bottom:14px;">Esempio: 8 Query head, 2 gruppi KV (Q₁–Q₄ nel gruppo 1, Q₅–Q₈ nel gruppo 2).</p>
+
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Proiezione delle Query (h matrici indipendenti)</h4>
+        <p>Come in MHA, ogni head ha la propria matrice di proiezione per la Query. Tutte le 8 head producono Q distinte.</p>
+        <div class="formula-inline" id="f1"></div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Proiezione K e V (g coppie, una per gruppo)</h4>
+        <p>Invece di h coppie (MHA) o 1 coppia (MQA), si producono <strong>g = 2</strong> coppie K, V. Ogni coppia serve un sottoinsieme di Query head.</p>
+        <div class="formula-inline" id="f2"></div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Assegnazione: ogni Q usa il K, V del proprio gruppo</h4>
+        <p>Q₁–Q₄ usano (K₁, V₁). Q₅–Q₈ usano (K₂, V₂). All'interno di ogni gruppo, le head calcolano attenzione diversa perché le loro Q sono diverse.</p>
+        <div class="formula-inline" id="f3"></div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Concatenazione e output</h4>
+        <p>Come sempre, gli output di tutte le head vengono concatenati e proiettati con W_O.</p>
+        <div class="formula-inline" id="f4"></div>
+      </div>
+    </div>
+
+    <div class="insight amber">
+      <span class="insight-icon">💡</span>
+      <p><strong>La differenza chiave rispetto a MQA:</strong> in MQA tutte le head vedono la stessa "prospettiva" K/V. In GQA-2, le head del gruppo 1 vedono una prospettiva diversa da quelle del gruppo 2. Questo preserva parte della diversità di MHA, mantenendo il grosso del risparmio.</p>
+    </div>
+  </div>
+
+  <!-- Stage 4: Tradeoff -->
+  <div class="card">
+    <div class="stage-label">Stage 4 — Il trade-off qualità vs efficienza</div>
+    <h2>Perché GQA è il punto ideale</h2>
+
+    <div class="tradeoff-area">
+      <canvas id="tradeoffCanvas" height="260"></canvas>
+    </div>
+
+    <div class="insight blue">
+      <span class="insight-icon">📊</span>
+      <p>Il grafico mostra il principio chiave: passare da MHA a GQA (es. g = 4 o g = 8) dà un <strong>enorme risparmio di memoria</strong> con una <strong>perdita di qualità trascurabile</strong>. Andare fino a MQA (g = 1) risparmia ancora di più, ma la curva di qualità inizia a scendere. Per questo i modelli moderni scelgono quasi tutti GQA.</p>
+    </div>
+  </div>
+
+  <!-- Stage 5: Real models -->
+  <div class="card">
+    <div class="stage-label">Stage 5 — Modelli reali che usano GQA</div>
+    <h2>Lo standard de facto</h2>
+
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Modello</th>
+          <th>Head Q</th>
+          <th>Gruppi KV</th>
+          <th>Head/Gruppo</th>
+          <th>Risparmio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight-row">
+          <td><strong>Llama 2 70B</strong></td>
+          <td>64</td>
+          <td>8</td>
+          <td>8</td>
+          <td>87.5%</td>
+        </tr>
+        <tr class="highlight-row">
+          <td><strong>Llama 3 8B</strong></td>
+          <td>32</td>
+          <td>8</td>
+          <td>4</td>
+          <td>75%</td>
+        </tr>
+        <tr class="highlight-row">
+          <td><strong>Mistral 7B</strong></td>
+          <td>32</td>
+          <td>8</td>
+          <td>4</td>
+          <td>75%</td>
+        </tr>
+        <tr class="highlight-row">
+          <td><strong>Gemma 2</strong></td>
+          <td>16</td>
+          <td>4</td>
+          <td>4</td>
+          <td>75%</td>
+        </tr>
+        <tr class="highlight-row">
+          <td><strong>Falcon 40B</strong></td>
+          <td>64</td>
+          <td>8</td>
+          <td>8</td>
+          <td>87.5%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="insight green">
+      <span class="insight-icon">🔑</span>
+      <p>Un pattern ricorrente: <strong>4 head per gruppo KV</strong> è la configurazione più comune. Offre un equilibrio tra diversità delle prospettive K/V e risparmio di memoria. Il paper originale GQA (Ainslie et al., 2023) ha mostrato che è possibile convertire un modello MHA pre-addestrato in GQA con un costo di fine-tuning minimo — <strong>uptraining</strong> con solo il 5% dei token originali.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Group colors ──
+const groupPalette = [
+  { bg: '#E3F2FD', border: '#1565C0', text: '#0D47A1', light: '#BBDEFB' },
+  { bg: '#E8F5E9', border: '#2E7D32', text: '#1B5E20', light: '#C8E6C9' },
+  { bg: '#FFF8E1', border: '#F57F17', text: '#E65100', light: '#FFECB3' },
+  { bg: '#FCE4EC', border: '#C2185B', text: '#880E4F', light: '#F8BBD0' },
+  { bg: '#F3E5F5', border: '#7B1FA2', text: '#4A148C', light: '#E1BEE7' },
+  { bg: '#E0F2F1', border: '#00695C', text: '#004D40', light: '#B2DFDB' },
+  { bg: '#FBE9E7', border: '#D84315', text: '#BF360C', light: '#FFCCBC' },
+  { bg: '#ECEFF1', border: '#455A64', text: '#263238', light: '#CFD8DC' },
+];
+
+// ── Spectrum ──
+const spectrumData = {
+  mha: {
+    label: 'MHA — g = h (caso limite sinistro)',
+    text: 'Ogni attention head ha le proprie matrici K e V: massima espressività, massimo costo in memoria. Corrisponde a GQA con <em>g</em> = <em>h</em> gruppi (un "gruppo" per head).'
+  },
+  gqa: {
+    label: 'GQA — 1 < g < h (compromesso)',
+    text: 'Le Query head vengono suddivise in <em>g</em> gruppi, ciascuno con una coppia K, V condivisa. Con pochi gruppi (es. 2–8) si ottiene la maggior parte del risparmio di MQA mantenendo quasi tutta la qualità di MHA. È il <strong>punto ideale</strong> dello spettro.'
+  },
+  mqa: {
+    label: 'MQA — g = 1 (caso limite destro)',
+    text: 'Tutte le Query head condividono una singola coppia K, V: massimo risparmio, ma tutte le head vedono la stessa "prospettiva" passiva. Possibile lieve degrado di qualità rispetto a GQA.'
+  }
+};
+
+function selectSpectrum(type) {
+  document.querySelectorAll('.spectrum-segment').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.spectrum-segment[data-type="${type}"]`).classList.add('active');
+  const d = spectrumData[type];
+  const panel = document.getElementById('spectrumExplain');
+  panel.innerHTML = `<div class="label">${d.label}</div><p>${d.text}</p>`;
+}
+
+// ── Group configurator ──
+const sliderH = document.getElementById('sliderH');
+const sliderG = document.getElementById('sliderG');
+
+function getValidG(h, g) {
+  if (g > h) g = h;
+  if (g < 1) g = 1;
+  // Find nearest divisor of h
+  if (h % g !== 0) {
+    let best = 1;
+    for (let d = 1; d <= h; d++) {
+      if (h % d === 0 && Math.abs(d - g) < Math.abs(best - g)) best = d;
+    }
+    g = best;
+  }
+  return g;
+}
+
+function updateGroups() {
+  const h = parseInt(sliderH.value);
+  let g = parseInt(sliderG.value);
+  g = getValidG(h, g);
+  sliderG.value = g;
+  sliderG.max = h;
+
+  document.getElementById('valH').textContent = h;
+  document.getElementById('valG').textContent = g;
+
+  const headsPerGroup = h / g;
+  const vis = document.getElementById('groupsVis');
+  let html = '';
+
+  for (let gi = 0; gi < g; gi++) {
+    const c = groupPalette[gi % groupPalette.length];
+    html += `<div class="group-box" style="background:${c.bg};border-color:${c.border};">`;
+    html += `<div class="group-label" style="color:${c.text};">Gruppo ${gi + 1}</div>`;
+
+    // Q row
+    html += '<div class="group-q-row">';
+    for (let qi = 0; qi < headsPerGroup; qi++) {
+      const idx = gi * headsPerGroup + qi + 1;
+      html += `<div class="g-cell q">Q${idx}</div>`;
+    }
+    html += '</div>';
+
+    // Connector
+    html += '<div class="group-connector"><svg width="24" height="14" viewBox="0 0 24 14">';
+    html += `<line x1="4" y1="0" x2="12" y2="12" stroke="${c.border}" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+    html += `<line x1="20" y1="0" x2="12" y2="12" stroke="${c.border}" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+    html += '</svg></div>';
+
+    // K, V
+    html += '<div class="g-kv-row">';
+    html += `<div class="g-cell k" style="width:100%;">K${gi + 1}</div>`;
+    html += `<div class="g-cell v" style="width:100%;">V${gi + 1}</div>`;
+    html += '</div>';
+
+    html += '</div>';
+  }
+
+  vis.innerHTML = html;
+
+  // Stats
+  const savings = Math.round((1 - g / h) * 100);
+  const typeName = g === 1 ? 'MQA' : g === h ? 'MHA' : `GQA-${g}`;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-box purple">
+      <div class="stat-number">${h}</div>
+      <div class="stat-label">Query head</div>
+    </div>
+    <div class="stat-box blue">
+      <div class="stat-number">${g}</div>
+      <div class="stat-label">Gruppi KV</div>
+    </div>
+    <div class="stat-box teal">
+      <div class="stat-number">${headsPerGroup}</div>
+      <div class="stat-label">Head / gruppo</div>
+    </div>
+    <div class="stat-box green">
+      <div class="stat-number">${savings}%</div>
+      <div class="stat-label">Risparmio cache</div>
+    </div>
+  `;
+
+  // Explain
+  const panel = document.getElementById('configExplain');
+  if (g === h) {
+    panel.innerHTML = `<div class="label">MHA — nessun raggruppamento</div><p>Con g = h, ogni head ha K e V proprie. Nessun risparmio, ma massima diversità di prospettive tra le head.</p>`;
+  } else if (g === 1) {
+    panel.innerHTML = `<div class="label">MQA — un solo gruppo</div><p>Tutte le ${h} Query head condividono una sola coppia K, V. Risparmio massimo (${savings}%) ma minima diversità nelle prospettive K/V.</p>`;
+  } else {
+    panel.innerHTML = `<div class="label">${typeName} — ${headsPerGroup} head per gruppo</div><p>${h} Query head divise in ${g} gruppi da ${headsPerGroup}. Ogni gruppo ha la propria "prospettiva" K/V. Cache ${Math.round(h/g)}× più piccola rispetto a MHA, con ${g} prospettive diverse preservate.</p>`;
+  }
+}
+
+sliderH.addEventListener('input', updateGroups);
+sliderG.addEventListener('input', updateGroups);
+
+// ── KaTeX formulas ──
+function renderFormulas() {
+  document.getElementById('f1').innerHTML = katex.renderToString(
+    'Q_i = x \\cdot W_{Q_i} \\quad \\text{per } i = 1, \\ldots, h',
+    { throwOnError: false }
+  );
+  document.getElementById('f2').innerHTML = katex.renderToString(
+    'K_j = x \\cdot W_{K_j}\\,,\\; V_j = x \\cdot W_{V_j} \\quad \\text{per } j = 1, \\ldots, g',
+    { throwOnError: false }
+  );
+  document.getElementById('f3').innerHTML = katex.renderToString(
+    '\\text{head}_i = \\text{softmax}\\!\\left(\\frac{Q_i \\, K_{\\,g(i)}^T}{\\sqrt{d_k}}\\right) V_{\\,g(i)} \\quad \\text{dove } g(i) = \\lceil i \\cdot g / h \\rceil',
+    { throwOnError: false }
+  );
+  document.getElementById('f4').innerHTML = katex.renderToString(
+    '\\text{Output} = \\text{Concat}(\\text{head}_1, \\ldots, \\text{head}_h) \\cdot W_O',
+    { throwOnError: false }
+  );
+}
+
+// ── Tradeoff chart ──
+function drawTradeoff() {
+  const canvas = document.getElementById('tradeoffCanvas');
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = 2;
+  const cw = rect.width;
+  canvas.width = cw * dpr;
+  canvas.height = 260 * dpr;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = '260px';
+  ctx.scale(dpr, dpr);
+
+  const w = cw;
+  const h = 260;
+  const padL = 60, padR = 30, padT = 30, padB = 50;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  // Background
+  ctx.fillStyle = '#FAFAF8';
+  roundRect(ctx, padL, padT, plotW, plotH, 6);
+  ctx.fill();
+
+  // Grid lines
+  ctx.strokeStyle = '#e5e4df';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (plotH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+  }
+
+  // Points: [g_fraction, quality, cache_size_fraction, label]
+  // g_fraction: 0 = MQA (g=1), 1 = MHA (g=h)
+  const points = [
+    { x: 0, q: 0.82, cache: 0.125, label: 'MQA (g=1)', color: '#0F6E56', bg: '#E1F5EE' },
+    { x: 0.25, q: 0.92, cache: 0.25, label: 'GQA-2', color: '#1565C0', bg: '#E3F2FD' },
+    { x: 0.5, q: 0.96, cache: 0.5, label: 'GQA-4', color: '#1565C0', bg: '#E3F2FD' },
+    { x: 0.75, q: 0.985, cache: 0.75, label: 'GQA-8', color: '#1565C0', bg: '#E3F2FD' },
+    { x: 1, q: 1, cache: 1, label: 'MHA (g=h)', color: '#534AB7', bg: '#EEEDFE' },
+  ];
+
+  // Quality curve (smooth)
+  ctx.strokeStyle = '#1565C0';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let t = 0; t <= 1; t += 0.01) {
+    // Curve: quality rises steeply then plateaus
+    const q = 1 - 0.18 * Math.pow(1 - t, 2.2);
+    const px = padL + t * plotW;
+    const py = padT + plotH - (q - 0.75) / 0.25 * plotH;
+    if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Cache bars (background)
+  ctx.globalAlpha = 0.3;
+  for (const p of points) {
+    const px = padL + p.x * plotW;
+    const barH = p.cache * plotH * 0.6;
+    ctx.fillStyle = '#993C1D';
+    roundRect(ctx, px - 12, padT + plotH - barH, 24, barH, 3);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Point dots
+  for (const p of points) {
+    const q = 1 - 0.18 * Math.pow(1 - p.x, 2.2);
+    const px = padL + p.x * plotW;
+    const py = padT + plotH - (q - 0.75) / 0.25 * plotH;
+
+    ctx.beginPath();
+    ctx.arc(px, py, 7, 0, Math.PI * 2);
+    ctx.fillStyle = p.bg;
+    ctx.fill();
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Label
+    ctx.font = '600 11px DM Sans, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = p.color;
+    const labelY = p.x < 0.5 ? py - 14 : py - 14;
+    ctx.fillText(p.label, px, labelY);
+  }
+
+  // "Sweet spot" highlight
+  const ssX1 = padL + 0.2 * plotW;
+  const ssX2 = padL + 0.8 * plotW;
+  ctx.fillStyle = 'rgba(21,101,192,0.06)';
+  ctx.fillRect(ssX1, padT, ssX2 - ssX1, plotH);
+  ctx.strokeStyle = 'rgba(21,101,192,0.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.strokeRect(ssX1, padT, ssX2 - ssX1, plotH);
+  ctx.setLineDash([]);
+
+  ctx.font = '600 12px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#1565C0';
+  ctx.textAlign = 'center';
+  ctx.fillText('← Sweet spot GQA →', (ssX1 + ssX2) / 2, padT + 18);
+
+  // Axes
+  ctx.strokeStyle = '#b4b2a9';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(padL, padT);
+  ctx.lineTo(padL, padT + plotH);
+  ctx.lineTo(padL + plotW, padT + plotH);
+  ctx.stroke();
+
+  // Y axis label
+  ctx.save();
+  ctx.translate(16, padT + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = '600 12px DM Sans, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#1565C0';
+  ctx.fillText('Qualità (blu)', 0, 0);
+  ctx.restore();
+
+  // Y axis right label
+  ctx.save();
+  ctx.translate(w - 6, padT + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = '600 12px DM Sans, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#993C1D';
+  ctx.fillText('Cache (barre)', 0, 0);
+  ctx.restore();
+
+  // X axis label
+  ctx.font = '600 12px DM Sans, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5f5e5a';
+  ctx.fillText('Numero di gruppi KV (g)  →', padL + plotW / 2, h - 8);
+
+  // X tick labels
+  ctx.font = '400 11px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#888780';
+  ctx.fillText('1', padL, padT + plotH + 18);
+  ctx.fillText('h/4', padL + plotW * 0.25, padT + plotH + 18);
+  ctx.fillText('h/2', padL + plotW * 0.5, padT + plotH + 18);
+  ctx.fillText('3h/4', padL + plotW * 0.75, padT + plotH + 18);
+  ctx.textAlign = 'right';
+  ctx.fillText('h', padL + plotW, padT + plotH + 18);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ── Init ──
+function init() {
+  updateGroups();
+  renderFormulas();
+  drawTradeoff();
+}
+
+init();
+window.addEventListener('resize', drawTradeoff);
+</script>
+</body>
+</html>
