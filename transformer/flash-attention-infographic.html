@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlashAttention — Infografica Interattiva</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-50: #EEEDFE; --purple-100: #DEDCFD;
+  --purple-600: #534AB7; --purple-800: #3C3489;
+  --teal-50: #E1F5EE; --teal-100: #C3EBD9;
+  --teal-600: #0F6E56; --teal-800: #085041;
+  --coral-50: #FAECE7; --coral-100: #F5D9CF;
+  --coral-600: #993C1D; --coral-800: #712B13;
+  --amber-50: #FFF8E1; --amber-100: #FFECB3;
+  --amber-600: #F57F17; --amber-800: #E65100;
+  --blue-50: #E3F2FD; --blue-100: #BBDEFB;
+  --blue-600: #1565C0; --blue-800: #0D47A1;
+  --green-50: #E8F5E9; --green-100: #C8E6C9;
+  --green-600: #2E7D32; --green-800: #1B5E20;
+  --red-50: #FFEBEE; --red-100: #FFCDD2;
+  --red-600: #D32F2F; --red-800: #B71C1C;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-page);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  display: flex; justify-content: center;
+  padding: 24px 16px; min-height: 100vh;
+}
+
+.wrap { max-width: 760px; width: 100%; }
+.wrap .katex { font-size: 1.15em; }
+.formula-block .katex { font-size: 1.35em; }
+
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 32px 28px;
+  margin-bottom: 16px;
+}
+
+h1 { font-weight: 700; font-size: 28px; line-height: 1.3; margin-bottom: 6px; }
+h2 { font-weight: 700; font-size: 20px; margin-bottom: 14px; }
+h3 { font-weight: 700; font-size: 17px; margin-bottom: 8px; }
+
+.subtitle {
+  font-size: 15px; font-weight: 400; color: var(--text-secondary); line-height: 1.55;
+}
+
+.stage-label {
+  font-weight: 500; font-size: 14px; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+}
+
+/* ── Memory hierarchy ── */
+.mem-hierarchy {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0; margin: 20px 0 12px;
+}
+
+.mem-level {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px; width: 100%;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer; transition: all 0.25s ease;
+  border-radius: 0;
+}
+
+.mem-level:first-child { border-radius: 10px 10px 0 0; }
+.mem-level:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+
+.mem-level:hover { background: var(--bg-secondary); }
+.mem-level.active { background: var(--bg-secondary); }
+
+.mem-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+
+.mem-level.sram .mem-icon { background: var(--teal-50); }
+.mem-level.hbm .mem-icon { background: var(--coral-50); }
+.mem-level.cpu .mem-icon { background: var(--purple-50); }
+
+.mem-info { flex: 1; }
+
+.mem-name { font-weight: 600; font-size: 15px; }
+.mem-level.sram .mem-name { color: var(--teal-800); }
+.mem-level.hbm .mem-name { color: var(--coral-800); }
+.mem-level.cpu .mem-name { color: var(--purple-800); }
+
+.mem-detail { font-size: 13px; color: var(--text-tertiary); margin-top: 2px; }
+
+.mem-stats {
+  text-align: right; flex-shrink: 0;
+}
+
+.mem-speed { font-weight: 700; font-size: 16px; }
+.mem-level.sram .mem-speed { color: var(--teal-600); }
+.mem-level.hbm .mem-speed { color: var(--coral-600); }
+.mem-level.cpu .mem-speed { color: var(--purple-600); }
+
+.mem-size { font-size: 12px; color: var(--text-tertiary); }
+
+.mem-bar-wrap {
+  width: 100%; margin: 14px 0 4px;
+}
+
+.mem-bar-label {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;
+}
+
+.mem-bar-track {
+  width: 100%; height: 20px; background: var(--bg-secondary);
+  border-radius: 10px; overflow: hidden; position: relative;
+}
+
+.mem-bar-fill {
+  height: 100%; border-radius: 10px;
+  transition: width 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+/* ── Standard vs Flash comparison ── */
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin: 16px 0;
+}
+
+.compare-card {
+  border-radius: 10px; padding: 18px; position: relative;
+}
+
+.compare-card.standard { background: var(--coral-50); border: 1px solid var(--coral-100); }
+.compare-card.flash { background: var(--teal-50); border: 1px solid var(--teal-100); }
+
+.compare-card h3 { margin-bottom: 12px; }
+.compare-card.standard h3 { color: var(--coral-800); }
+.compare-card.flash h3 { color: var(--teal-800); }
+
+.compare-card canvas { width: 100%; display: block; }
+
+.compare-steps {
+  margin-top: 12px; font-size: 13px; line-height: 1.6; color: var(--text-secondary);
+}
+
+.compare-steps .step-item {
+  padding: 4px 0;
+  display: flex; gap: 8px; align-items: flex-start;
+}
+
+.step-marker {
+  width: 20px; height: 20px; min-width: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff; margin-top: 1px;
+}
+
+.compare-card.standard .step-marker { background: var(--coral-600); }
+.compare-card.flash .step-marker { background: var(--teal-600); }
+
+/* ── Tiling animation ── */
+.tiling-area {
+  margin: 16px 0;
+}
+
+.tiling-canvas-wrap {
+  background: var(--bg-secondary); border-radius: 10px;
+  padding: 16px; text-align: center;
+}
+
+.tiling-canvas-wrap canvas { width: 100%; display: block; }
+
+.controls {
+  display: flex; gap: 8px; justify-content: center;
+  margin-top: 14px; flex-wrap: wrap;
+}
+
+.ctrl-btn {
+  padding: 8px 18px; border-radius: 8px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 600; font-size: 14px;
+  color: var(--text-secondary); cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ctrl-btn:hover { border-color: var(--teal-600); color: var(--teal-600); }
+
+.ctrl-btn.primary {
+  background: var(--teal-600); color: #fff; border-color: var(--teal-600);
+}
+
+.ctrl-btn.primary:hover { background: var(--teal-800); border-color: var(--teal-800); }
+
+.tiling-explain {
+  background: var(--bg-secondary); border-radius: 10px;
+  padding: 14px 18px; margin-top: 14px;
+  font-size: 14px; line-height: 1.6; color: var(--text-secondary);
+  min-height: 50px;
+}
+
+.tiling-explain .label {
+  font-weight: 600; font-size: 14px; color: var(--teal-600); margin-bottom: 3px;
+}
+
+/* ── IO Complexity ── */
+.io-compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin: 16px 0;
+}
+
+.io-card {
+  border-radius: 10px; padding: 18px; text-align: center;
+}
+
+.io-card.standard-io { background: var(--coral-50); border: 1px solid var(--coral-100); }
+.io-card.flash-io { background: var(--teal-50); border: 1px solid var(--teal-100); }
+
+.io-card h4 { font-weight: 600; font-size: 14px; margin-bottom: 10px; }
+.io-card.standard-io h4 { color: var(--coral-800); }
+.io-card.flash-io h4 { color: var(--teal-800); }
+
+.io-formula { margin: 8px 0; }
+
+.io-reads {
+  margin-top: 8px; font-size: 13px; color: var(--text-tertiary);
+}
+
+/* ── Stats row ── */
+.stats-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 16px;
+}
+
+.stat-box {
+  border-radius: 8px; padding: 14px 10px; text-align: center;
+}
+
+.stat-number { font-weight: 700; font-size: 22px; line-height: 1.2; }
+.stat-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); margin-top: 3px; }
+
+.stat-box.teal { background: var(--teal-50); }
+.stat-box.teal .stat-number { color: var(--teal-800); }
+.stat-box.blue { background: var(--blue-50); }
+.stat-box.blue .stat-number { color: var(--blue-800); }
+.stat-box.green { background: var(--green-50); }
+.stat-box.green .stat-number { color: var(--green-800); }
+
+/* ── Version timeline ── */
+.timeline {
+  position: relative; margin: 20px 0 8px; padding-left: 28px;
+}
+
+.timeline::before {
+  content: ''; position: absolute; left: 11px; top: 8px;
+  bottom: 8px; width: 2px; background: var(--border-light);
+}
+
+.tl-item {
+  position: relative; padding: 12px 0 20px; padding-left: 24px;
+}
+
+.tl-item:last-child { padding-bottom: 0; }
+
+.tl-dot {
+  position: absolute; left: -22px; top: 14px;
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 3px solid; background: var(--bg-primary);
+}
+
+.tl-item.v1 .tl-dot { border-color: var(--teal-600); }
+.tl-item.v2 .tl-dot { border-color: var(--blue-600); }
+.tl-item.v3 .tl-dot { border-color: var(--purple-600); }
+
+.tl-header {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px;
+}
+
+.tl-title { font-weight: 700; font-size: 16px; }
+.tl-item.v1 .tl-title { color: var(--teal-800); }
+.tl-item.v2 .tl-title { color: var(--blue-800); }
+.tl-item.v3 .tl-title { color: var(--purple-800); }
+
+.tl-year { font-size: 13px; font-weight: 500; color: var(--text-tertiary); }
+
+.tl-desc { font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+
+.tl-tag {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 600; margin-top: 6px;
+}
+
+.tl-item.v1 .tl-tag { background: var(--teal-50); color: var(--teal-800); }
+.tl-item.v2 .tl-tag { background: var(--blue-50); color: var(--blue-800); }
+.tl-item.v3 .tl-tag { background: var(--purple-50); color: var(--purple-800); }
+
+/* ── Insight ── */
+.insight {
+  display: flex; gap: 12px; align-items: flex-start;
+  border-radius: 10px; padding: 16px 18px; margin-top: 16px;
+}
+
+.insight.amber { background: var(--amber-50); border: 1px solid var(--amber-100); }
+.insight.teal { background: var(--teal-50); border: 1px solid var(--teal-100); }
+.insight.red { background: var(--red-50); border: 1px solid var(--red-100); }
+
+.insight-icon { font-size: 20px; flex-shrink: 0; line-height: 1.4; }
+.insight p { font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .card { padding: 20px 16px; }
+  h1 { font-size: 24px; }
+  .compare-grid, .io-compare { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr; }
+  .mem-level { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="card">
+    <h1>FlashAttention</h1>
+    <p class="subtitle">L'attenzione standard è limitata dalla <strong>memoria</strong>, non dal calcolo. FlashAttention riorganizza il calcolo per minimizzare i trasferimenti tra GPU HBM e SRAM, ottenendo speedup di 2–4× senza cambiare il risultato matematico.</p>
+  </div>
+
+  <!-- Stage 1: Memory hierarchy -->
+  <div class="card">
+    <div class="stage-label">Stage 1 — Il collo di bottiglia: la gerarchia di memoria GPU</div>
+    <h2>Perché la memoria è il problema</h2>
+    <p class="subtitle" style="margin-bottom:14px;">La GPU ha due livelli di memoria. Il calcolo dell'attenzione è <strong>memory-bound</strong>: il tempo è dominato dai trasferimenti dati, non dalle operazioni aritmetiche.</p>
+
+    <div class="mem-hierarchy" id="memHierarchy">
+      <div class="mem-level sram active" onclick="selectMem('sram')">
+        <div class="mem-icon">⚡</div>
+        <div class="mem-info">
+          <div class="mem-name">SRAM (on-chip)</div>
+          <div class="mem-detail">Memoria dei Streaming Multiprocessor — vicina ai core di calcolo</div>
+        </div>
+        <div class="mem-stats">
+          <div class="mem-speed">~19 TB/s</div>
+          <div class="mem-size">~20 MB totali</div>
+        </div>
+      </div>
+      <div class="mem-level hbm" onclick="selectMem('hbm')">
+        <div class="mem-icon">🔶</div>
+        <div class="mem-info">
+          <div class="mem-name">HBM (off-chip)</div>
+          <div class="mem-detail">High Bandwidth Memory — la "VRAM" principale della GPU</div>
+        </div>
+        <div class="mem-stats">
+          <div class="mem-speed">~1.5 TB/s</div>
+          <div class="mem-size">40–80 GB</div>
+        </div>
+      </div>
+      <div class="mem-level cpu" onclick="selectMem('cpu')">
+        <div class="mem-icon">💾</div>
+        <div class="mem-info">
+          <div class="mem-name">CPU DRAM</div>
+          <div class="mem-detail">RAM di sistema — usata come overflow (molto lenta per la GPU)</div>
+        </div>
+        <div class="mem-stats">
+          <div class="mem-speed">~50 GB/s</div>
+          <div class="mem-size">256+ GB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mem-bar-wrap">
+      <div class="mem-bar-label">
+        <span>Bandwidth relativo</span>
+        <span>SRAM è ~13× più veloce di HBM</span>
+      </div>
+      <div class="mem-bar-track">
+        <div class="mem-bar-fill" id="barSRAM" style="width:0%;background:var(--teal-600);"></div>
+      </div>
+      <div class="mem-bar-track" style="margin-top:4px;">
+        <div class="mem-bar-fill" id="barHBM" style="width:0%;background:var(--coral-600);"></div>
+      </div>
+    </div>
+
+    <div class="insight red">
+      <span class="insight-icon">⚠️</span>
+      <p><strong>Il paradosso:</strong> la SRAM è velocissima ma piccolissima (~20 MB). La matrice di attenzione per una sequenza di 4096 token occupa 4096² × 4 byte = <strong>64 MB</strong> — non entra nella SRAM. L'attenzione standard è costretta a scrivere e rileggere questa matrice dalla HBM, sprecando tempo in trasferimenti.</p>
+    </div>
+  </div>
+
+  <!-- Stage 2: Standard vs Flash side by side -->
+  <div class="card">
+    <div class="stage-label">Stage 2 — Standard Attention vs FlashAttention</div>
+    <h2>Due modi di calcolare lo stesso risultato</h2>
+
+    <div class="compare-grid">
+      <div class="compare-card standard">
+        <h3>Standard Attention</h3>
+        <canvas id="canvasStd" height="220"></canvas>
+        <div class="compare-steps">
+          <div class="step-item"><div class="step-marker">1</div><span>Carica Q, K da HBM → calcola S = QKᵀ</span></div>
+          <div class="step-item"><div class="step-marker">2</div><span><strong>Scrivi S in HBM</strong> (matrice N×N)</span></div>
+          <div class="step-item"><div class="step-marker">3</div><span>Rileggi S da HBM → calcola P = softmax(S)</span></div>
+          <div class="step-item"><div class="step-marker">4</div><span><strong>Scrivi P in HBM</strong></span></div>
+          <div class="step-item"><div class="step-marker">5</div><span>Rileggi P, carica V → calcola O = PV</span></div>
+        </div>
+      </div>
+      <div class="compare-card flash">
+        <h3>FlashAttention</h3>
+        <canvas id="canvasFlash" height="220"></canvas>
+        <div class="compare-steps">
+          <div class="step-item"><div class="step-marker">1</div><span>Dividi Q, K, V in <strong>blocchi</strong> (tile)</span></div>
+          <div class="step-item"><div class="step-marker">2</div><span>Carica un blocco di Q e un blocco di K, V nella SRAM</span></div>
+          <div class="step-item"><div class="step-marker">3</div><span>Calcola attenzione <strong>localmente in SRAM</strong></span></div>
+          <div class="step-item"><div class="step-marker">4</div><span>Aggiorna output con <strong>online softmax</strong></span></div>
+          <div class="step-item"><div class="step-marker">5</div><span>Ripeti per tutti i blocchi — <strong>mai materializza S</strong></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight amber">
+      <span class="insight-icon">💡</span>
+      <p><strong>La differenza fondamentale:</strong> l'attenzione standard <em>materializza</em> la matrice N×N in HBM (2 scritture + 2 letture). FlashAttention non la scrive mai — calcola tutto a blocchi nella SRAM veloce, accumulando il risultato incrementalmente con l'<strong>online softmax</strong>.</p>
+    </div>
+  </div>
+
+  <!-- Stage 3: Tiling animation -->
+  <div class="card">
+    <div class="stage-label">Stage 3 — L'algoritmo di tiling</div>
+    <h2>Blocco per blocco nella SRAM</h2>
+    <p class="subtitle" style="margin-bottom:10px;">Premi "Avanti" per vedere come FlashAttention processa la matrice di attenzione un tile alla volta, senza mai materializzarla interamente.</p>
+
+    <div class="tiling-area">
+      <div class="tiling-canvas-wrap">
+        <canvas id="tilingCanvas" height="340"></canvas>
+      </div>
+      <div class="controls">
+        <button class="ctrl-btn" id="btnTilePrev" disabled>← Indietro</button>
+        <button class="ctrl-btn primary" id="btnTileNext">Avanti →</button>
+        <button class="ctrl-btn" id="btnTileReset">Reset</button>
+      </div>
+      <div class="tiling-explain" id="tilingExplain">
+        <div class="label">Premi "Avanti" per iniziare</div>
+        La matrice Q è divisa in blocchi di righe, la matrice K in blocchi di colonne. Ad ogni step, un blocco di Q e un blocco di K vengono caricati nella SRAM per il calcolo locale.
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 4: IO Complexity -->
+  <div class="card">
+    <div class="stage-label">Stage 4 — Complessità di I/O</div>
+    <h2>Quanti byte si muovono?</h2>
+
+    <div class="io-compare">
+      <div class="io-card standard-io">
+        <h4>Standard Attention</h4>
+        <div class="io-formula" id="ioStd"></div>
+        <div class="io-reads">Legge/scrive la matrice N×N più volte dalla HBM</div>
+      </div>
+      <div class="io-card flash-io">
+        <h4>FlashAttention</h4>
+        <div class="io-formula" id="ioFlash"></div>
+        <div class="io-reads">Legge Q, K, V una volta, scrive O una volta</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box teal">
+        <div class="stat-number">2–4×</div>
+        <div class="stat-label">Speedup wall-clock</div>
+      </div>
+      <div class="stat-box blue">
+        <div class="stat-number">5–20×</div>
+        <div class="stat-label">Meno IO verso HBM</div>
+      </div>
+      <div class="stat-box green">
+        <div class="stat-number">O(N)</div>
+        <div class="stat-label">Memoria (non N²)</div>
+      </div>
+    </div>
+
+    <div class="insight teal">
+      <span class="insight-icon">🔑</span>
+      <p>Il termine chiave è <span id="ioKeyFormula"></span>: quando N (lunghezza sequenza) è grande e d (dimensione head) è piccolo (tipicamente 64–128), il risparmio è enorme. Per N = 4096 e d = 128, il fattore è ~32×. FlashAttention è <strong>IO-aware</strong>: non cambia la matematica, ma la riordina per minimizzare i trasferimenti.</p>
+    </div>
+  </div>
+
+  <!-- Stage 5: Online softmax -->
+  <div class="card">
+    <div class="stage-label">Stage 5 — Il trucco matematico: Online Softmax</div>
+    <h2>Come calcolare softmax senza tutta la riga</h2>
+
+    <p class="subtitle" style="margin-bottom:16px;">Il softmax richiede normalmente di conoscere <em>tutti</em> i valori della riga per calcolare il denominatore. L'<strong>online softmax</strong> lo aggiorna incrementalmente, blocco per blocco.</p>
+
+    <div class="step-row" style="border-bottom:1px solid var(--border-light);padding:14px 0;">
+      <div class="step-num" style="background:var(--teal-600);color:#fff;">1</div>
+      <div class="step-content">
+        <h4>Inizializza: m = −∞, l = 0, O = 0</h4>
+        <p>m è il massimo corrente (per stabilità numerica), l è la somma esponenziale corrente, O è l'output accumulato.</p>
+      </div>
+    </div>
+    <div class="step-row" style="border-bottom:1px solid var(--border-light);padding:14px 0;">
+      <div class="step-num" style="background:var(--teal-600);color:#fff;">2</div>
+      <div class="step-content">
+        <h4>Per ogni blocco j di K, V:</h4>
+        <p>Calcola i punteggi locali <span id="fLocal"></span>. Trova il nuovo massimo e aggiorna la somma esponenziale correggendo per il cambio di scala.</p>
+        <div class="formula-inline" id="fOnline"></div>
+      </div>
+    </div>
+    <div class="step-row" style="padding:14px 0;">
+      <div class="step-num" style="background:var(--teal-600);color:#fff;">3</div>
+      <div class="step-content">
+        <h4>Aggiorna l'output accumulato</h4>
+        <p>Riscala l'output precedente con il fattore di correzione e aggiungi il contributo del blocco corrente. Alla fine, O contiene il risultato esatto.</p>
+        <div class="formula-inline" id="fUpdate"></div>
+      </div>
+    </div>
+
+    <div class="insight amber">
+      <span class="insight-icon">💡</span>
+      <p>L'online softmax è la ragione per cui FlashAttention produce <strong>risultati esatti</strong> (non approssimati). Non è un'approssimazione dell'attenzione — è un <em>riordino</em> del calcolo che sfrutta la proprietà associativa della somma pesata, mantenendo la correzione numerica ad ogni passo.</p>
+    </div>
+  </div>
+
+  <!-- Stage 6: Versions timeline -->
+  <div class="card">
+    <div class="stage-label">Stage 6 — Evoluzione</div>
+    <h2>Da FlashAttention-1 a FlashAttention-3</h2>
+
+    <div class="timeline">
+      <div class="tl-item v1">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-title">FlashAttention-1</span>
+          <span class="tl-year">Dao et al., 2022</span>
+        </div>
+        <div class="tl-desc">L'idea originale: tiling + online softmax. Dimostra che l'attenzione è memory-bound e che il riarrangiamento IO-aware dà speedup 2–4× su GPU A100. Riduce la memoria da O(N²) a O(N).</div>
+        <span class="tl-tag">Idea fondamentale</span>
+      </div>
+      <div class="tl-item v2">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-title">FlashAttention-2</span>
+          <span class="tl-year">Dao, 2023</span>
+        </div>
+        <div class="tl-desc">Ottimizzazione dell'implementazione: migliore parallelismo tra i thread, riduzione del lavoro non-matmul (softmax, rescaling), loop esterno su K/V invece che su Q. Raggiunge il 50–70% della peak FLOPS teorica di A100.</div>
+        <span class="tl-tag">Ottimizzazione implementativa</span>
+      </div>
+      <div class="tl-item v3">
+        <div class="tl-dot"></div>
+        <div class="tl-header">
+          <span class="tl-title">FlashAttention-3</span>
+          <span class="tl-year">Shah et al., 2024</span>
+        </div>
+        <div class="tl-desc">Sfrutta le nuove capacità delle GPU Hopper (H100): asincronicità WGMMA, pipelining dei blocchi, supporto nativo FP8. Speedup 1.5–2× rispetto a FA-2 su H100, fino al 75% della peak FLOPS.</div>
+        <span class="tl-tag">Hardware-specific (Hopper)</span>
+      </div>
+    </div>
+
+    <div class="insight teal">
+      <span class="insight-icon">🚀</span>
+      <p>FlashAttention è oggi lo <strong>standard de facto</strong> per il calcolo dell'attenzione in quasi tutti i framework di training e inference (PyTorch, HuggingFace, vLLM, TensorRT-LLM). Non è un modulo aggiuntivo — è il modo in cui l'attenzione viene calcolata nei modelli moderni.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Memory hierarchy interaction ──
+function selectMem(type) {
+  document.querySelectorAll('.mem-level').forEach(l => l.classList.remove('active'));
+  document.querySelector(`.mem-level.${type}`).classList.add('active');
+}
+
+// Animate bandwidth bars
+setTimeout(() => {
+  document.getElementById('barSRAM').style.width = '100%';
+  document.getElementById('barHBM').style.width = '8%';
+}, 400);
+
+// ── Standard vs Flash diagrams ──
+function drawStandardFlow(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = 2;
+  const cw = rect.width - 36;
+  canvas.width = cw * dpr;
+  canvas.height = 220 * dpr;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = '220px';
+  ctx.scale(dpr, dpr);
+
+  const w = cw, h = 220;
+
+  // HBM region
+  ctx.fillStyle = '#FFF5F0';
+  roundRect(ctx, 0, 0, w, h, 8);
+  ctx.fill();
+  ctx.font = '600 10px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#993C1D';
+  ctx.textAlign = 'right';
+  ctx.fillText('HBM', w - 6, 14);
+
+  // Matrices
+  const mw = 50, mh = 35, gap = 8;
+  const cx = w / 2;
+
+  // Q, K
+  drawMatrix(ctx, cx - mw - gap/2, 20, mw, mh, 'Q', '#534AB7', '#EEEDFE');
+  drawMatrix(ctx, cx + gap/2, 20, mw, mh, 'K', '#0F6E56', '#E1F5EE');
+
+  // S = QK^T (big)
+  const sw = 80, sh = 50;
+  drawMatrix(ctx, cx - sw/2, 72, sw, sh, 'S = QKᵀ', '#993C1D', '#FAECE7');
+  ctx.font = '400 9px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#993C1D';
+  ctx.textAlign = 'center';
+  ctx.fillText('N × N in HBM!', cx, 72 + sh + 12);
+
+  // P = softmax(S)
+  drawMatrix(ctx, cx - sw/2, 142, sw, sh, 'P = softmax', '#993C1D', '#FAECE7');
+
+  // Arrows
+  ctx.strokeStyle = 'rgba(153,60,29,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 2]);
+  drawArrow(ctx, cx, 55, cx, 72);
+  drawArrow(ctx, cx, 122, cx, 142);
+  ctx.setLineDash([]);
+}
+
+function drawFlashFlow(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = 2;
+  const cw = rect.width - 36;
+  canvas.width = cw * dpr;
+  canvas.height = 220 * dpr;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = '220px';
+  ctx.scale(dpr, dpr);
+
+  const w = cw, h = 220;
+
+  // SRAM region (small bright)
+  ctx.fillStyle = '#F0FAF5';
+  roundRect(ctx, 0, 60, w, 100, 8);
+  ctx.fill();
+  ctx.strokeStyle = var_teal;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  roundRect(ctx, 0, 60, w, 100, 8);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = '600 10px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#0F6E56';
+  ctx.textAlign = 'right';
+  ctx.fillText('SRAM', w - 6, 74);
+
+  // HBM label
+  ctx.fillStyle = '#993C1D';
+  ctx.font = '500 9px DM Sans, system-ui, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('HBM', 4, 14);
+  ctx.fillText('HBM', 4, h - 6);
+
+  const cx = w / 2;
+  const mw = 36, mh = 28;
+
+  // Tiles in HBM (top)
+  const tileW = 22, tileH = 16, tGap = 3;
+  for (let i = 0; i < 4; i++) {
+    const tx = cx - (4 * tileW + 3 * tGap) / 2 + i * (tileW + tGap);
+    ctx.fillStyle = i === 1 ? '#534AB7' : '#DEDCFD';
+    roundRect(ctx, tx, 20, tileW, tileH, 3);
+    ctx.fill();
+  }
+  ctx.font = '500 9px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#534AB7';
+  ctx.textAlign = 'center';
+  ctx.fillText('Q tiles', cx, 16);
+
+  for (let i = 0; i < 4; i++) {
+    const tx = cx - (4 * tileW + 3 * tGap) / 2 + i * (tileW + tGap);
+    ctx.fillStyle = i === 2 ? '#0F6E56' : '#C3EBD9';
+    roundRect(ctx, tx, 42, tileW, tileH, 3);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#0F6E56';
+  ctx.fillText('K,V tiles', cx, 42 - 2);
+
+  // In SRAM: active computation
+  drawMatrix(ctx, cx - mw - 6, 80, mw, mh, 'Qᵢ', '#534AB7', '#EEEDFE');
+  drawMatrix(ctx, cx + 6, 80, mw, mh, 'Kⱼ,Vⱼ', '#0F6E56', '#E1F5EE');
+
+  // Local result
+  ctx.font = '600 10px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#0F6E56';
+  ctx.textAlign = 'center';
+  ctx.fillText('calcolo locale + online softmax', cx, 128);
+
+  // Arrows
+  ctx.strokeStyle = 'rgba(15,110,86,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 2]);
+  drawArrow(ctx, cx - 14, 36, cx - 14, 80);
+  drawArrow(ctx, cx + 14, 58, cx + 14, 80);
+  ctx.setLineDash([]);
+
+  // Output back to HBM
+  const ow = 60;
+  drawMatrix(ctx, cx - ow/2, 178, ow, 28, 'O (output)', '#0F6E56', '#E1F5EE');
+  ctx.strokeStyle = 'rgba(15,110,86,0.4)';
+  ctx.setLineDash([3, 2]);
+  drawArrow(ctx, cx, 140, cx, 178);
+  ctx.setLineDash([]);
+
+  ctx.font = '400 9px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#0F6E56';
+  ctx.textAlign = 'center';
+  ctx.fillText('solo O scritto in HBM', cx, h - 2);
+}
+
+const var_teal = '#0F6E56';
+
+function drawMatrix(ctx, x, y, w, h, label, color, bg) {
+  ctx.fillStyle = bg;
+  roundRect(ctx, x, y, w, h, 4);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, x, y, w, h, 4);
+  ctx.stroke();
+  ctx.font = '600 10px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, x + w/2, y + h/2);
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawArrow(ctx, x1, y1, x2, y2) {
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2 - 5 * Math.cos(angle - 0.4), y2 - 5 * Math.sin(angle - 0.4));
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x2 - 5 * Math.cos(angle + 0.4), y2 - 5 * Math.sin(angle + 0.4));
+  ctx.stroke();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ── Tiling animation ──
+const GRID = 4;
+let tileStep = -1;
+const totalTileSteps = GRID * GRID;
+
+const tileExplanations = [];
+for (let qi = 0; qi < GRID; qi++) {
+  for (let kj = 0; kj < GRID; kj++) {
+    tileExplanations.push({
+      label: `Blocco Q${qi+1} × K${kj+1}`,
+      text: `Carico il blocco Q${qi+1} (righe ${qi*1024}–${(qi+1)*1024-1}) e K${kj+1}/V${kj+1} (colonne ${kj*1024}–${(kj+1)*1024-1}) nella SRAM. Calcolo l'attenzione locale e aggiorno l'accumulatore dell'output con l'online softmax.`
+    });
+  }
+}
+
+function drawTiling() {
+  const canvas = document.getElementById('tilingCanvas');
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = 2;
+  const cw = rect.width - 32;
+  canvas.width = cw * dpr;
+  canvas.height = 340 * dpr;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = '340px';
+  ctx.scale(dpr, dpr);
+
+  const w = cw, h = 340;
+  ctx.clearRect(0, 0, w, h);
+
+  // Layout
+  const matSize = Math.min(200, w * 0.38);
+  const tileSize = matSize / GRID;
+  const matX = (w - matSize) / 2;
+  const matY = 60;
+
+  // Q labels (left side)
+  ctx.font = '600 12px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#534AB7';
+  ctx.textAlign = 'center';
+  ctx.fillText('Q (righe)', matX + matSize / 2, matY - 28);
+
+  // K labels (top)
+  ctx.fillStyle = '#0F6E56';
+  ctx.fillText('K (colonne)', matX + matSize / 2, matY - 12);
+
+  // Q block labels (left)
+  ctx.font = '500 10px DM Sans, system-ui, sans-serif';
+  ctx.textAlign = 'right';
+  for (let i = 0; i < GRID; i++) {
+    ctx.fillStyle = '#534AB7';
+    ctx.fillText('Q' + (i+1), matX - 6, matY + i * tileSize + tileSize / 2 + 3);
+  }
+
+  // K block labels (top)
+  ctx.textAlign = 'center';
+  for (let j = 0; j < GRID; j++) {
+    ctx.fillStyle = '#0F6E56';
+    ctx.fillText('K' + (j+1), matX + j * tileSize + tileSize / 2, matY + matSize + 14);
+  }
+
+  // Draw grid
+  const currentQi = tileStep >= 0 ? Math.floor(tileStep / GRID) : -1;
+  const currentKj = tileStep >= 0 ? tileStep % GRID : -1;
+
+  for (let i = 0; i < GRID; i++) {
+    for (let j = 0; j < GRID; j++) {
+      const x = matX + j * tileSize;
+      const y = matY + i * tileSize;
+      const stepIdx = i * GRID + j;
+
+      if (stepIdx < tileStep) {
+        // Already computed
+        ctx.fillStyle = '#C3EBD9';
+      } else if (stepIdx === tileStep) {
+        // Current
+        ctx.fillStyle = '#0F6E56';
+      } else {
+        // Future
+        ctx.fillStyle = '#F1EFE8';
+      }
+
+      roundRect(ctx, x + 1, y + 1, tileSize - 2, tileSize - 2, 3);
+      ctx.fill();
+
+      if (stepIdx === tileStep) {
+        ctx.strokeStyle = '#085041';
+        ctx.lineWidth = 2;
+        roundRect(ctx, x + 1, y + 1, tileSize - 2, tileSize - 2, 3);
+        ctx.stroke();
+
+        // Checkmark or processing indicator
+        ctx.font = '700 14px DM Sans, system-ui, sans-serif';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚡', x + tileSize / 2, y + tileSize / 2 + 5);
+      } else if (stepIdx < tileStep) {
+        ctx.font = '600 11px DM Sans, system-ui, sans-serif';
+        ctx.fillStyle = '#0F6E56';
+        ctx.textAlign = 'center';
+        ctx.fillText('✓', x + tileSize / 2, y + tileSize / 2 + 4);
+      }
+    }
+  }
+
+  // SRAM indicator
+  const sramY = matY + matSize + 30;
+  ctx.fillStyle = '#F0FAF5';
+  roundRect(ctx, matX, sramY, matSize, 50, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#0F6E56';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  roundRect(ctx, matX, sramY, matSize, 50, 8);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.font = '600 11px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#0F6E56';
+  ctx.textAlign = 'center';
+
+  if (tileStep >= 0 && tileStep < totalTileSteps) {
+    ctx.fillText(`SRAM: Q${currentQi+1} × K${currentKj+1} → online softmax → aggiorna O`, matX + matSize / 2, sramY + 22);
+    ctx.font = '400 10px DM Sans, system-ui, sans-serif';
+    ctx.fillStyle = '#888780';
+    ctx.fillText(`Step ${tileStep + 1} / ${totalTileSteps}`, matX + matSize / 2, sramY + 40);
+  } else if (tileStep >= totalTileSteps) {
+    ctx.fillText('Completato! Output O esatto, mai materializzata S.', matX + matSize / 2, sramY + 28);
+  } else {
+    ctx.fillStyle = '#888780';
+    ctx.fillText('SRAM — in attesa', matX + matSize / 2, sramY + 28);
+  }
+
+  // Legend
+  const legY = sramY + 60;
+  const legItems = [
+    { color: '#F1EFE8', label: 'Non calcolato' },
+    { color: '#0F6E56', label: 'In calcolo (SRAM)' },
+    { color: '#C3EBD9', label: 'Completato' },
+  ];
+  const legTotalW = legItems.length * 120;
+  const legStartX = (w - legTotalW) / 2;
+  ctx.font = '400 11px DM Sans, system-ui, sans-serif';
+
+  legItems.forEach((item, idx) => {
+    const lx = legStartX + idx * 120;
+    ctx.fillStyle = item.color;
+    roundRect(ctx, lx, legY, 14, 14, 3);
+    ctx.fill();
+    if (item.color === '#F1EFE8') {
+      ctx.strokeStyle = '#b4b2a9';
+      ctx.lineWidth = 1;
+      roundRect(ctx, lx, legY, 14, 14, 3);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#5f5e5a';
+    ctx.textAlign = 'left';
+    ctx.fillText(item.label, lx + 20, legY + 11);
+  });
+}
+
+function updateTilingExplain() {
+  const panel = document.getElementById('tilingExplain');
+  if (tileStep < 0) {
+    panel.innerHTML = '<div class="label">Premi "Avanti" per iniziare</div>La matrice Q è divisa in blocchi di righe, la matrice K in blocchi di colonne. Ad ogni step, un blocco di Q e un blocco di K vengono caricati nella SRAM per il calcolo locale.';
+  } else if (tileStep >= totalTileSteps) {
+    panel.innerHTML = '<div class="label">Completato!</div>Tutti i 16 blocchi sono stati processati. L\'output O è esatto — identico a quello dell\'attenzione standard, ma senza mai aver scritto la matrice N×N in HBM. Solo i blocchi attivi alla volta occupavano la SRAM.';
+  } else {
+    const e = tileExplanations[tileStep];
+    panel.innerHTML = `<div class="label">${e.label} — Step ${tileStep + 1}/${totalTileSteps}</div>${e.text}`;
+  }
+}
+
+document.getElementById('btnTileNext').addEventListener('click', () => {
+  if (tileStep < totalTileSteps) { tileStep++; drawTiling(); updateTilingExplain(); updateTileButtons(); }
+});
+document.getElementById('btnTilePrev').addEventListener('click', () => {
+  if (tileStep >= 0) { tileStep--; drawTiling(); updateTilingExplain(); updateTileButtons(); }
+});
+document.getElementById('btnTileReset').addEventListener('click', () => {
+  tileStep = -1; drawTiling(); updateTilingExplain(); updateTileButtons();
+});
+
+function updateTileButtons() {
+  document.getElementById('btnTilePrev').disabled = tileStep < 0;
+  document.getElementById('btnTileNext').disabled = tileStep >= totalTileSteps;
+  if (tileStep >= totalTileSteps) {
+    document.getElementById('btnTileNext').textContent = 'Completato ✓';
+  } else {
+    document.getElementById('btnTileNext').textContent = 'Avanti →';
+  }
+}
+
+// ── KaTeX formulas ──
+function renderFormulas() {
+  document.getElementById('ioStd').innerHTML = katex.renderToString(
+    '\\Theta(N \\cdot d + N^2)',
+    { throwOnError: false, displayMode: true }
+  );
+  document.getElementById('ioFlash').innerHTML = katex.renderToString(
+    '\\Theta\\!\\left(N \\cdot d + \\frac{N^2 \\cdot d}{M}\\right)',
+    { throwOnError: false, displayMode: true }
+  );
+  document.getElementById('ioKeyFormula').innerHTML = katex.renderToString(
+    '\\frac{N^2 d}{M} \\ll N^2',
+    { throwOnError: false }
+  );
+  document.getElementById('fLocal').innerHTML = katex.renderToString(
+    'S_{ij} = Q_i K_j^T / \\sqrt{d_k}',
+    { throwOnError: false }
+  );
+  document.getElementById('fOnline').innerHTML = katex.renderToString(
+    'm_{\\text{new}} = \\max(m_{\\text{old}},\\, \\max(S_{ij})), \\quad l_{\\text{new}} = e^{m_{\\text{old}} - m_{\\text{new}}} \\cdot l_{\\text{old}} + \\sum_k e^{S_{ijk} - m_{\\text{new}}}',
+    { throwOnError: false }
+  );
+  document.getElementById('fUpdate').innerHTML = katex.renderToString(
+    'O_{\\text{new}} = \\frac{l_{\\text{old}} \\cdot e^{m_{\\text{old}} - m_{\\text{new}}}}{l_{\\text{new}}} \\cdot O_{\\text{old}} \\;+\\; \\frac{e^{S_{ij} - m_{\\text{new}}}}{l_{\\text{new}}} \\cdot V_j',
+    { throwOnError: false }
+  );
+}
+
+// ── Init ──
+function init() {
+  drawStandardFlow('canvasStd');
+  drawFlashFlow('canvasFlash');
+  drawTiling();
+  renderFormulas();
+}
+
+init();
+window.addEventListener('resize', () => {
+  drawStandardFlow('canvasStd');
+  drawFlashFlow('canvasFlash');
+  drawTiling();
+});
+</script>
+</body>
+</html>
