@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MHA vs MQA vs GQA — Confronto</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-50: #EEEDFE; --purple-100: #DEDCFD;
+  --purple-600: #534AB7; --purple-800: #3C3489;
+  --teal-50: #E1F5EE; --teal-100: #C3EBD9;
+  --teal-600: #0F6E56; --teal-800: #085041;
+  --coral-50: #FAECE7; --coral-100: #F5D9CF;
+  --coral-600: #993C1D; --coral-800: #712B13;
+  --amber-50: #FFF8E1; --amber-100: #FFECB3;
+  --amber-600: #F57F17; --amber-800: #E65100;
+  --blue-50: #E3F2FD; --blue-100: #BBDEFB;
+  --blue-600: #1565C0; --blue-800: #0D47A1;
+  --green-50: #E8F5E9; --green-100: #C8E6C9;
+  --green-600: #2E7D32; --green-800: #1B5E20;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-page);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  display: flex; justify-content: center;
+  padding: 24px 16px; min-height: 100vh;
+}
+
+.wrap { max-width: 760px; width: 100%; }
+.wrap .katex { font-size: 1.15em; }
+.formula-block .katex { font-size: 1.35em; }
+
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 32px 28px;
+  margin-bottom: 16px;
+}
+
+h1 { font-weight: 700; font-size: 28px; line-height: 1.3; margin-bottom: 6px; }
+h2 { font-weight: 700; font-size: 20px; margin-bottom: 14px; }
+h3 { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+
+.subtitle { font-size: 15px; font-weight: 400; color: var(--text-secondary); line-height: 1.55; }
+
+.stage-label {
+  font-weight: 500; font-size: 14px; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+}
+
+/* ── Three-column arch cards ── */
+.arch-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px; margin: 16px 0;
+}
+
+.arch-card {
+  border-radius: 10px; padding: 16px 10px 14px;
+  text-align: center; cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.25s ease;
+}
+
+.arch-card:hover { transform: translateY(-1px); }
+.arch-card.sel { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+
+.arch-card.mha { background: var(--purple-50); }
+.arch-card.mha.sel { border-color: var(--purple-600); }
+.arch-card.mqa { background: var(--teal-50); }
+.arch-card.mqa.sel { border-color: var(--teal-600); }
+.arch-card.gqa { background: var(--blue-50); }
+.arch-card.gqa.sel { border-color: var(--blue-600); }
+
+.arch-card.mha h3 { color: var(--purple-800); }
+.arch-card.mqa h3 { color: var(--teal-800); }
+.arch-card.gqa h3 { color: var(--blue-800); }
+
+.arch-card canvas { width: 100%; display: block; margin: 6px 0; }
+
+.arch-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; margin-top: 4px;
+}
+
+.arch-card.mha .arch-tag { background: var(--purple-100); color: var(--purple-800); }
+.arch-card.mqa .arch-tag { background: var(--teal-100); color: var(--teal-800); }
+.arch-card.gqa .arch-tag { background: var(--blue-100); color: var(--blue-800); }
+
+/* ── Explain panel ── */
+.explain-panel {
+  background: var(--bg-secondary); border-radius: 10px;
+  padding: 16px 20px; margin-top: 14px; min-height: 70px;
+  transition: all 0.3s ease;
+}
+
+.explain-panel .elabel { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.explain-panel.mha-a .elabel { color: var(--purple-600); }
+.explain-panel.mqa-a .elabel { color: var(--teal-600); }
+.explain-panel.gqa-a .elabel { color: var(--blue-600); }
+
+.explain-panel p { font-size: 15px; font-weight: 400; line-height: 1.6; color: var(--text-secondary); }
+
+/* ── KV Cache bars ── */
+.cache-bars { margin: 16px 0; }
+
+.cache-bar-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+}
+
+.cache-bar-label {
+  width: 60px; font-size: 14px; font-weight: 600;
+  text-align: right; flex-shrink: 0;
+}
+
+.cache-bar-label.mha-l { color: var(--purple-800); }
+.cache-bar-label.gqa-l { color: var(--blue-800); }
+.cache-bar-label.mqa-l { color: var(--teal-800); }
+
+.cache-bar-track {
+  flex: 1; height: 36px; background: var(--bg-secondary);
+  border-radius: 8px; overflow: hidden; position: relative;
+}
+
+.cache-bar-fill {
+  height: 100%; border-radius: 8px;
+  display: flex; align-items: center; padding-left: 12px;
+  font-size: 13px; font-weight: 600; color: #fff;
+  transition: width 1s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.cache-bar-val {
+  width: 60px; font-size: 14px; font-weight: 700; text-align: left;
+  flex-shrink: 0; margin-left: 10px;
+}
+
+/* ── Interactive configurator ── */
+.config-controls {
+  display: flex; gap: 20px; align-items: center;
+  justify-content: center; flex-wrap: wrap; margin-bottom: 18px;
+}
+
+.config-group {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.config-group label {
+  font-size: 14px; font-weight: 500; color: var(--text-secondary);
+}
+
+.config-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 130px; height: 6px; border-radius: 3px;
+  background: var(--border-light); outline: none;
+}
+
+.config-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--blue-600); cursor: pointer;
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.config-value {
+  font-weight: 700; font-size: 16px; min-width: 28px;
+  text-align: center; color: var(--blue-800);
+}
+
+/* ── Group visualization ── */
+.groups-vis {
+  display: flex; justify-content: center; gap: 10px;
+  flex-wrap: wrap; margin: 14px 0;
+}
+
+.group-box {
+  border-radius: 8px; padding: 10px 8px;
+  text-align: center; min-width: 70px;
+}
+
+.group-label-top {
+  font-size: 10px; font-weight: 600; margin-bottom: 6px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+.gq-row { display: flex; gap: 2px; justify-content: center; margin-bottom: 4px; }
+
+.gc {
+  width: 34px; height: 20px; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 600; color: #fff;
+}
+
+.gc.q { background: var(--purple-600); }
+.gc.k { background: var(--teal-600); }
+.gc.v { background: var(--coral-600); }
+
+.gkv-row {
+  display: flex; flex-direction: column; gap: 2px; align-items: stretch;
+}
+
+.group-connector-svg {
+  display: flex; justify-content: center; margin: 2px 0;
+}
+
+/* ── Stats row ── */
+.stats-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-top: 14px;
+}
+
+.stat-box {
+  border-radius: 8px; padding: 12px 6px; text-align: center;
+}
+
+.stat-number { font-weight: 700; font-size: 20px; line-height: 1.2; }
+.stat-label { font-size: 10px; font-weight: 500; color: var(--text-tertiary); margin-top: 2px; }
+
+.stat-box.purple { background: var(--purple-50); }
+.stat-box.purple .stat-number { color: var(--purple-800); }
+.stat-box.teal { background: var(--teal-50); }
+.stat-box.teal .stat-number { color: var(--teal-800); }
+.stat-box.blue { background: var(--blue-50); }
+.stat-box.blue .stat-number { color: var(--blue-800); }
+.stat-box.green { background: var(--green-50); }
+.stat-box.green .stat-number { color: var(--green-800); }
+
+/* ── Tradeoff canvas ── */
+.tradeoff-wrap {
+  margin: 16px 0; background: var(--bg-secondary);
+  border-radius: 10px; padding: 16px;
+}
+
+.tradeoff-wrap canvas { width: 100%; display: block; }
+
+/* ── Model table ── */
+.model-table {
+  width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px;
+}
+
+.model-table th {
+  text-align: left; padding: 10px 10px; font-weight: 600; font-size: 11px;
+  color: var(--text-tertiary); border-bottom: 2px solid var(--border-light);
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+.model-table td {
+  padding: 9px 10px; border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+.model-table tr:last-child td { border-bottom: none; }
+
+.type-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+}
+
+.type-badge.mha { background: var(--purple-50); color: var(--purple-800); }
+.type-badge.gqa { background: var(--blue-50); color: var(--blue-800); }
+.type-badge.mqa { background: var(--teal-50); color: var(--teal-800); }
+
+/* ── Insight ── */
+.insight {
+  display: flex; gap: 12px; align-items: flex-start;
+  border-radius: 10px; padding: 16px 18px; margin-top: 16px;
+}
+
+.insight.amber { background: var(--amber-50); border: 1px solid var(--amber-100); }
+.insight.teal { background: var(--teal-50); border: 1px solid var(--teal-100); }
+.insight.blue { background: var(--blue-50); border: 1px solid var(--blue-100); }
+.insight.green { background: var(--green-50); border: 1px solid var(--green-100); }
+
+.insight-icon { font-size: 20px; flex-shrink: 0; line-height: 1.4; }
+.insight p { font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .card { padding: 20px 16px; }
+  h1 { font-size: 24px; }
+  .arch-grid { grid-template-columns: 1fr; gap: 10px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .gc { width: 28px; height: 16px; font-size: 8px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="card">
+    <h1>MHA vs MQA vs GQA</h1>
+    <p class="subtitle">Tre strategie per bilanciare espressività e efficienza nella KV Cache dei Transformer. Da <em>h</em> coppie K/V indipendenti (MHA) a una sola condivisa (MQA), passando per il compromesso ottimale (GQA).</p>
+  </div>
+
+  <!-- Stage 1: Architecture diagrams -->
+  <div class="card">
+    <div class="stage-label">Stage 1 — Le tre architetture</div>
+    <h2>Clicca per esplorare le differenze</h2>
+
+    <div class="arch-grid">
+      <div class="arch-card mha sel" onclick="selectArch('mha')">
+        <h3>MHA</h3>
+        <canvas id="cMHA" height="240"></canvas>
+        <span class="arch-tag">h coppie KV</span>
+      </div>
+      <div class="arch-card gqa" onclick="selectArch('gqa')">
+        <h3>GQA</h3>
+        <canvas id="cGQA" height="240"></canvas>
+        <span class="arch-tag">g coppie KV</span>
+      </div>
+      <div class="arch-card mqa" onclick="selectArch('mqa')">
+        <h3>MQA</h3>
+        <canvas id="cMQA" height="240"></canvas>
+        <span class="arch-tag">1 coppia KV</span>
+      </div>
+    </div>
+
+    <div class="explain-panel mha-a" id="archExplain">
+      <div class="elabel">Multi-Head Attention (MHA)</div>
+      <p>Ogni head ha le proprie matrici Q, K e V indipendenti. Massima espressività: ogni head può "guardare" la sequenza da una prospettiva completamente diversa. Il prezzo è una KV Cache che scala linearmente con il numero di head.</p>
+    </div>
+  </div>
+
+  <!-- Stage 2: KV Cache comparison -->
+  <div class="card">
+    <div class="stage-label">Stage 2 — Impatto sulla KV Cache</div>
+    <h2>Quanto pesa la cache per ciascuna architettura</h2>
+    <p class="subtitle" style="margin-bottom:14px;">Esempio con 8 attention head. La lunghezza delle barre è proporzionale al numero di coppie K, V in cache per layer.</p>
+
+    <div class="cache-bars">
+      <div class="cache-bar-row">
+        <div class="cache-bar-label mha-l">MHA</div>
+        <div class="cache-bar-track">
+          <div class="cache-bar-fill" id="barMHA" style="width:0;background:var(--purple-600);">8 × (K, V)</div>
+        </div>
+        <div class="cache-bar-val" style="color:var(--purple-800);">100%</div>
+      </div>
+      <div class="cache-bar-row">
+        <div class="cache-bar-label gqa-l">GQA-4</div>
+        <div class="cache-bar-track">
+          <div class="cache-bar-fill" id="barGQA4" style="width:0;background:var(--blue-600);">4 × (K, V)</div>
+        </div>
+        <div class="cache-bar-val" style="color:var(--blue-800);">50%</div>
+      </div>
+      <div class="cache-bar-row">
+        <div class="cache-bar-label gqa-l">GQA-2</div>
+        <div class="cache-bar-track">
+          <div class="cache-bar-fill" id="barGQA2" style="width:0;background:var(--blue-600);">2 × (K, V)</div>
+        </div>
+        <div class="cache-bar-val" style="color:var(--blue-800);">25%</div>
+      </div>
+      <div class="cache-bar-row">
+        <div class="cache-bar-label mqa-l">MQA</div>
+        <div class="cache-bar-track">
+          <div class="cache-bar-fill" id="barMQA" style="width:0;background:var(--teal-600);">1 × (K, V)</div>
+        </div>
+        <div class="cache-bar-val" style="color:var(--teal-800);">12.5%</div>
+      </div>
+    </div>
+
+    <div class="formula-block" id="cacheFormula" style="text-align:center;margin:10px 0 0;"></div>
+
+    <div class="insight amber">
+      <span class="insight-icon">💡</span>
+      <p>La riduzione è lineare: con <em>h</em> = 8 head, GQA-4 dimezza la cache, GQA-2 la riduce a ¼, MQA a ⅛. Per un modello 70B con contesto 4096, si passa da ~4 GB (MHA) a ~500 MB (MQA) di cache per richiesta.</p>
+    </div>
+  </div>
+
+  <!-- Stage 3: Interactive configurator -->
+  <div class="card">
+    <div class="stage-label">Stage 3 — Esplora le configurazioni</div>
+    <h2>Configura head e gruppi KV</h2>
+
+    <div class="config-controls">
+      <div class="config-group">
+        <label>Query head (h):</label>
+        <input type="range" class="config-slider" id="sliderH" min="4" max="16" value="8" step="2">
+        <span class="config-value" id="valH">8</span>
+      </div>
+      <div class="config-group">
+        <label>Gruppi KV (g):</label>
+        <input type="range" class="config-slider" id="sliderG" min="1" max="8" value="4" step="1">
+        <span class="config-value" id="valG">4</span>
+      </div>
+    </div>
+
+    <div class="groups-vis" id="groupsVis"></div>
+
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="explain-panel" id="configExplain" style="margin-top:14px;">
+      <div class="elabel" style="color:var(--blue-600);">GQA-4</div>
+      <p>8 Query head divise in 4 gruppi da 2. Ogni gruppo condivide una coppia K, V. La cache è 2× più piccola rispetto a MHA, mantenendo 4 "prospettive" diverse.</p>
+    </div>
+  </div>
+
+  <!-- Stage 4: Tradeoff chart -->
+  <div class="card">
+    <div class="stage-label">Stage 4 — Il trade-off</div>
+    <h2>Qualità vs efficienza: dove cade ogni architettura</h2>
+
+    <div class="tradeoff-wrap">
+      <canvas id="tradeoffCanvas" height="250"></canvas>
+    </div>
+
+    <div class="insight blue">
+      <span class="insight-icon">📊</span>
+      <p>La curva mostra il principio fondamentale: <strong>la qualità degrada lentamente</strong> al diminuire dei gruppi KV (da MHA verso MQA), mentre il <strong>risparmio di memoria cresce rapidamente</strong>. GQA occupa lo "sweet spot" — quasi tutta la qualità di MHA a una frazione del costo.</p>
+    </div>
+  </div>
+
+  <!-- Stage 5: Real models -->
+  <div class="card">
+    <div class="stage-label">Stage 5 — Modelli reali</div>
+    <h2>Chi usa cosa nel mondo reale</h2>
+
+    <table class="model-table">
+      <thead>
+        <tr><th>Modello</th><th>Tipo</th><th>Head Q</th><th>Gruppi KV</th><th>Head/Gruppo</th><th>Risparmio</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>GPT-3</strong></td><td><span class="type-badge mha">MHA</span></td><td>96</td><td>96</td><td>1</td><td>0%</td></tr>
+        <tr><td><strong>PaLM</strong></td><td><span class="type-badge mqa">MQA</span></td><td>16</td><td>1</td><td>16</td><td>94%</td></tr>
+        <tr><td><strong>Llama 2 70B</strong></td><td><span class="type-badge gqa">GQA</span></td><td>64</td><td>8</td><td>8</td><td>87.5%</td></tr>
+        <tr><td><strong>Llama 3 8B</strong></td><td><span class="type-badge gqa">GQA</span></td><td>32</td><td>8</td><td>4</td><td>75%</td></tr>
+        <tr><td><strong>Mistral 7B</strong></td><td><span class="type-badge gqa">GQA</span></td><td>32</td><td>8</td><td>4</td><td>75%</td></tr>
+        <tr><td><strong>Gemma 2</strong></td><td><span class="type-badge gqa">GQA</span></td><td>16</td><td>4</td><td>4</td><td>75%</td></tr>
+        <tr><td><strong>Falcon 40B</strong></td><td><span class="type-badge mqa">MQA</span></td><td>64</td><td>1</td><td>64</td><td>98%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="insight green">
+      <span class="insight-icon">🔑</span>
+      <p><strong>Il trend è chiaro:</strong> i modelli datati (GPT-3) usavano MHA. I primi tentativi di ottimizzazione (PaLM, Falcon) hanno sperimentato MQA. I modelli moderni convergono su <strong>GQA con 4–8 head per gruppo KV</strong> come configurazione ottimale. Il paper GQA (Ainslie et al., 2023) ha inoltre mostrato che un modello MHA può essere convertito a GQA con un fine-tuning molto leggero (~5% dei token originali).</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Architecture diagrams ──
+const qCol = '#534AB7', kCol = '#0F6E56', vCol = '#993C1D';
+
+function drawArch(canvasId, type) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = 2;
+  const cw = rect.width - 20;
+  canvas.width = cw * dpr;
+  canvas.height = 240 * dpr;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = '240px';
+  ctx.scale(dpr, dpr);
+
+  const w = cw, h = 240;
+  ctx.clearRect(0, 0, w, h);
+
+  const nH = 4;
+  const cellW = Math.min(32, (w - 24) / nH - 4);
+  const cellH = 24;
+  const gap = 4;
+  const totalW = nH * cellW + (nH - 1) * gap;
+  const sx = (w - totalW) / 2;
+
+  // Input
+  ctx.fillStyle = '#F1EFE8';
+  rr(ctx, sx, 6, totalW, 22, 5); ctx.fill();
+  ctx.font = '600 10px DM Sans, system-ui, sans-serif';
+  ctx.textAlign = 'center'; ctx.fillStyle = '#5f5e5a';
+  ctx.fillText('Input x', sx + totalW/2, 20);
+
+  // Q row
+  const qY = 46;
+  ctx.font = '500 9px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#888780'; ctx.textAlign = 'center';
+  ctx.fillText('Query (indipendenti)', w/2, qY - 4);
+
+  for (let i = 0; i < nH; i++) {
+    const x = sx + i * (cellW + gap);
+    ctx.fillStyle = qCol;
+    rr(ctx, x, qY, cellW, cellH, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '700 10px DM Sans, system-ui, sans-serif';
+    ctx.fillText('Q'+(i+1), x+cellW/2, qY+16);
+  }
+
+  // K row
+  const kY = 102;
+  const kLabel = type === 'mha' ? 'Key (indipendenti)' : type === 'mqa' ? 'Key (condivisa)' : 'Key (per gruppo)';
+  ctx.font = '500 9px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#888780'; ctx.textAlign = 'center';
+  ctx.fillText(kLabel, w/2, kY - 4);
+
+  if (type === 'mha') {
+    for (let i = 0; i < nH; i++) {
+      const x = sx + i * (cellW + gap);
+      ctx.fillStyle = kCol; rr(ctx, x, kY, cellW, cellH, 4); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '700 10px DM Sans, system-ui, sans-serif';
+      ctx.fillText('K'+(i+1), x+cellW/2, kY+16);
+    }
+  } else if (type === 'mqa') {
+    ctx.fillStyle = kCol; rr(ctx, sx, kY, totalW, cellH, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '700 11px DM Sans, system-ui, sans-serif';
+    ctx.fillText('K (1 sola)', sx+totalW/2, kY+16);
+  } else {
+    const gw = (totalW - gap) / 2;
+    for (let g = 0; g < 2; g++) {
+      const x = sx + g * (gw + gap);
+      ctx.fillStyle = g===0 ? '#0F6E56' : '#1A8B6E';
+      rr(ctx, x, kY, gw, cellH, 4); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '700 10px DM Sans, system-ui, sans-serif';
+      ctx.fillText('K'+(g+1), x+gw/2, kY+16);
+    }
+  }
+
+  // V row
+  const vY = 150;
+  const vLabel = type === 'mha' ? 'Value (indipendenti)' : type === 'mqa' ? 'Value (condivisa)' : 'Value (per gruppo)';
+  ctx.font = '500 9px DM Sans, system-ui, sans-serif';
+  ctx.fillStyle = '#888780'; ctx.textAlign = 'center';
+  ctx.fillText(vLabel, w/2, vY - 4);
+
+  if (type === 'mha') {
+    for (let i = 0; i < nH; i++) {
+      const x = sx + i * (cellW + gap);
+      ctx.fillStyle = vCol; rr(ctx, x, vY, cellW, cellH, 4); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '700 10px DM Sans, system-ui, sans-serif';
+      ctx.fillText('V'+(i+1), x+cellW/2, vY+16);
+    }
+  } else if (type === 'mqa') {
+    ctx.fillStyle = vCol; rr(ctx, sx, vY, totalW, cellH, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '700 11px DM Sans, system-ui, sans-serif';
+    ctx.fillText('V (1 sola)', sx+totalW/2, vY+16);
+  } else {
+    const gw = (totalW - gap) / 2;
+    for (let g = 0; g < 2; g++) {
+      const x = sx + g * (gw + gap);
+      ctx.fillStyle = g===0 ? '#993C1D' : '#B84D2E';
+      rr(ctx, x, vY, gw, cellH, 4); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '700 10px DM Sans, system-ui, sans-serif';
+      ctx.fillText('V'+(g+1), x+gw/2, vY+16);
+    }
+  }
+
+  // Q → K connections
+  ctx.setLineDash([3,2]); ctx.lineWidth = 1.2;
+  for (let i = 0; i < nH; i++) {
+    const qcx = sx + i*(cellW+gap) + cellW/2;
+    let kcx;
+    if (type === 'mha') { kcx = qcx; ctx.strokeStyle = 'rgba(83,74,183,0.3)'; }
+    else if (type === 'mqa') { kcx = sx + totalW/2; ctx.strokeStyle = 'rgba(15,110,86,0.3)'; }
+    else { const g = i < 2 ? 0 : 1; const gw = (totalW-gap)/2; kcx = sx + g*(gw+gap)+gw/2; ctx.strokeStyle = 'rgba(21,101,192,0.3)'; }
+    ctx.beginPath(); ctx.moveTo(qcx, qY+cellH+2); ctx.lineTo(kcx, kY); ctx.stroke();
+  }
+
+  // K → V
+  if (type === 'mha') {
+    for (let i = 0; i < nH; i++) {
+      const cx = sx + i*(cellW+gap)+cellW/2;
+      ctx.strokeStyle = 'rgba(15,110,86,0.2)';
+      ctx.beginPath(); ctx.moveTo(cx, kY+cellH); ctx.lineTo(cx, vY); ctx.stroke();
+    }
+  } else if (type === 'mqa') {
+    ctx.strokeStyle = 'rgba(153,60,29,0.25)';
+    ctx.beginPath(); ctx.moveTo(sx+totalW/2, kY+cellH); ctx.lineTo(sx+totalW/2, vY); ctx.stroke();
+  } else {
+    const gw = (totalW-gap)/2;
+    for (let g = 0; g < 2; g++) {
+      const cx = sx + g*(gw+gap)+gw/2;
+      ctx.strokeStyle = 'rgba(21,101,192,0.2)';
+      ctx.beginPath(); ctx.moveTo(cx, kY+cellH); ctx.lineTo(cx, vY); ctx.stroke();
+    }
+  }
+  ctx.setLineDash([]);
+
+  // KV Cache bracket
+  const bx = sx + totalW + 6;
+  ctx.strokeStyle = 'rgba(136,135,128,0.4)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(bx,kY-3); ctx.lineTo(bx+6,kY-3); ctx.lineTo(bx+6,vY+cellH+3); ctx.lineTo(bx,vY+cellH+3); ctx.stroke();
+  ctx.save(); ctx.translate(bx+14,(kY+vY+cellH)/2); ctx.rotate(-Math.PI/2);
+  ctx.font = '600 8px DM Sans, system-ui, sans-serif'; ctx.fillStyle = '#888780';
+  ctx.textAlign = 'center'; ctx.fillText('KV Cache', 0, 0);
+  ctx.restore();
+
+  // Output
+  const oY = 200;
+  ctx.fillStyle = '#F1EFE8'; rr(ctx, sx, oY, totalW, 22, 5); ctx.fill();
+  ctx.font = '600 10px DM Sans, system-ui, sans-serif';
+  ctx.textAlign = 'center'; ctx.fillStyle = '#5f5e5a';
+  ctx.fillText('Concat + W_O', sx+totalW/2, oY+14);
+
+  ctx.setLineDash([3,2]); ctx.strokeStyle = 'rgba(153,60,29,0.2)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(sx+totalW/2, vY+cellH); ctx.lineTo(sx+totalW/2, oY); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+
+const archData = {
+  mha: { cls: 'mha-a', label: 'Multi-Head Attention (MHA)', text: 'Ogni head ha le proprie matrici Q, K e V indipendenti. Massima espressività: ogni head può "guardare" la sequenza da una prospettiva completamente diversa. Il prezzo è una KV Cache che scala linearmente con il numero di head.' },
+  gqa: { cls: 'gqa-a', label: 'Grouped-Query Attention (GQA)', text: 'Le Query head sono divise in <em>g</em> gruppi, ciascuno con una coppia K, V condivisa. Le head nello stesso gruppo fanno domande diverse (Q distinte) ma consultano lo stesso "archivio" (K, V). Con g = 2 → cache 4× più piccola; con g = 4 → cache 2× più piccola.' },
+  mqa: { cls: 'mqa-a', label: 'Multi-Query Attention (MQA)', text: 'Tutte le Query head condividono un\'unica coppia K, V. Massimo risparmio: la cache si riduce di un fattore <em>h</em>. L\'espressività è mantenuta dalle Query diverse, ma tutte vedono la stessa "prospettiva" passiva. Possibile lieve calo di qualità.' }
+};
+
+function selectArch(type) {
+  document.querySelectorAll('.arch-card').forEach(c => c.classList.remove('sel'));
+  document.querySelector(`.arch-card.${type}`).classList.add('sel');
+  const d = archData[type];
+  const p = document.getElementById('archExplain');
+  p.className = 'explain-panel ' + d.cls;
+  p.innerHTML = `<div class="elabel">${d.label}</div><p>${d.text}</p>`;
+}
+
+// ── KV Cache bars ──
+function animateBars() {
+  setTimeout(() => {
+    document.getElementById('barMHA').style.width = '100%';
+    document.getElementById('barGQA4').style.width = '50%';
+    document.getElementById('barGQA2').style.width = '25%';
+    document.getElementById('barMQA').style.width = '12.5%';
+  }, 400);
+}
+
+// ── Configurator ──
+const groupPalette = [
+  {bg:'#E3F2FD',border:'#1565C0',text:'#0D47A1'},
+  {bg:'#E8F5E9',border:'#2E7D32',text:'#1B5E20'},
+  {bg:'#FFF8E1',border:'#F57F17',text:'#E65100'},
+  {bg:'#FCE4EC',border:'#C2185B',text:'#880E4F'},
+  {bg:'#F3E5F5',border:'#7B1FA2',text:'#4A148C'},
+  {bg:'#E0F2F1',border:'#00695C',text:'#004D40'},
+  {bg:'#FBE9E7',border:'#D84315',text:'#BF360C'},
+  {bg:'#ECEFF1',border:'#455A64',text:'#263238'},
+];
+
+function getValidG(h, g) {
+  if (g > h) g = h;
+  if (g < 1) g = 1;
+  if (h % g !== 0) {
+    let best = 1;
+    for (let d = 1; d <= h; d++) { if (h%d===0 && Math.abs(d-g)<Math.abs(best-g)) best = d; }
+    g = best;
+  }
+  return g;
+}
+
+function updateConfig() {
+  const h = parseInt(document.getElementById('sliderH').value);
+  let g = parseInt(document.getElementById('sliderG').value);
+  g = getValidG(h, g);
+  document.getElementById('sliderG').value = g;
+  document.getElementById('sliderG').max = h;
+  document.getElementById('valH').textContent = h;
+  document.getElementById('valG').textContent = g;
+
+  const hpg = h / g;
+  const vis = document.getElementById('groupsVis');
+  let html = '';
+  for (let gi = 0; gi < g; gi++) {
+    const c = groupPalette[gi % groupPalette.length];
+    html += `<div class="group-box" style="background:${c.bg};border:1px solid ${c.border};">`;
+    html += `<div class="group-label-top" style="color:${c.text};">G${gi+1}</div>`;
+    html += '<div class="gq-row">';
+    for (let qi = 0; qi < hpg; qi++) { html += `<div class="gc q">Q${gi*hpg+qi+1}</div>`; }
+    html += '</div>';
+    html += `<div class="group-connector-svg"><svg width="20" height="10" viewBox="0 0 20 10"><line x1="4" y1="0" x2="10" y2="9" stroke="${c.border}" stroke-width="1.5" stroke-dasharray="2,2"/><line x1="16" y1="0" x2="10" y2="9" stroke="${c.border}" stroke-width="1.5" stroke-dasharray="2,2"/></svg></div>`;
+    html += '<div class="gkv-row">';
+    html += `<div class="gc k" style="width:100%;">K${gi+1}</div>`;
+    html += `<div class="gc v" style="width:100%;">V${gi+1}</div>`;
+    html += '</div></div>';
+  }
+  vis.innerHTML = html;
+
+  const savings = Math.round((1 - g/h) * 100);
+  const typeName = g===1 ? 'MQA' : g===h ? 'MHA' : `GQA-${g}`;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-box purple"><div class="stat-number">${h}</div><div class="stat-label">Query head</div></div>
+    <div class="stat-box blue"><div class="stat-number">${g}</div><div class="stat-label">Gruppi KV</div></div>
+    <div class="stat-box teal"><div class="stat-number">${hpg}</div><div class="stat-label">Head/gruppo</div></div>
+    <div class="stat-box green"><div class="stat-number">${savings}%</div><div class="stat-label">Risparmio cache</div></div>`;
+
+  const p = document.getElementById('configExplain');
+  let txt;
+  if (g===h) { txt = `Con g = h, ogni head ha K e V proprie. Questa è <strong>MHA classica</strong>: nessun risparmio.`; p.querySelector('.elabel').style.color = 'var(--purple-600)'; }
+  else if (g===1) { txt = `Tutte le ${h} Query head condividono una sola K e V. Questa è <strong>MQA</strong>: risparmio massimo (${savings}%).`; p.querySelector('.elabel').style.color = 'var(--teal-600)'; }
+  else { txt = `${hpg} Query head per gruppo, ${g} gruppi KV. Questa è <strong>${typeName}</strong>: ${savings}% di risparmio mantenendo ${g} prospettive diverse.`; p.querySelector('.elabel').style.color = 'var(--blue-600)'; }
+  p.querySelector('.elabel').textContent = typeName;
+  p.querySelector('p').innerHTML = txt;
+}
+
+document.getElementById('sliderH').addEventListener('input', updateConfig);
+document.getElementById('sliderG').addEventListener('input', updateConfig);
+
+// ── Tradeoff chart ──
+function drawTradeoff() {
+  const canvas = document.getElementById('tradeoffCanvas');
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = 2; const cw = rect.width - 32;
+  canvas.width = cw*dpr; canvas.height = 250*dpr;
+  canvas.style.width = cw+'px'; canvas.style.height = '250px';
+  ctx.scale(dpr, dpr);
+
+  const w = cw, h = 250;
+  const pL=56,pR=26,pT=28,pB=44;
+  const pW=w-pL-pR, pH=h-pT-pB;
+
+  ctx.fillStyle = '#FAFAF8'; rr(ctx,pL,pT,pW,pH,6); ctx.fill();
+
+  // Grid
+  ctx.strokeStyle = '#e5e4df'; ctx.lineWidth = 0.5;
+  for (let i=0;i<=4;i++){ const y=pT+pH/4*i; ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(pL+pW,y);ctx.stroke(); }
+
+  // Quality curve
+  ctx.strokeStyle = '#1565C0'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let t=0;t<=1;t+=0.01){
+    const q = 1 - 0.18*Math.pow(1-t,2.2);
+    const px=pL+t*pW, py=pT+pH-(q-0.75)/0.25*pH;
+    if(t===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // Cache line (descending)
+  ctx.strokeStyle = '#993C1D'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+  ctx.beginPath();
+  for (let t=0;t<=1;t+=0.01){
+    const c = t; // cache fraction = g/h
+    const px=pL+t*pW, py=pT+pH-c*pH;
+    if(t===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Points
+  const pts = [
+    {x:0, label:'MQA', col:'#0F6E56', bg:'#E1F5EE'},
+    {x:0.25, label:'GQA-2', col:'#1565C0', bg:'#E3F2FD'},
+    {x:0.5, label:'GQA-4', col:'#1565C0', bg:'#E3F2FD'},
+    {x:1, label:'MHA', col:'#534AB7', bg:'#EEEDFE'},
+  ];
+  pts.forEach(p => {
+    const q = 1 - 0.18*Math.pow(1-p.x,2.2);
+    const px=pL+p.x*pW, py=pT+pH-(q-0.75)/0.25*pH;
+    ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2);
+    ctx.fillStyle = p.bg; ctx.fill();
+    ctx.strokeStyle = p.col; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.font = '600 11px DM Sans, system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.fillStyle = p.col;
+    ctx.fillText(p.label, px, py-12);
+  });
+
+  // Sweet spot
+  const ss1=pL+0.15*pW, ss2=pL+0.65*pW;
+  ctx.fillStyle = 'rgba(21,101,192,0.06)'; ctx.fillRect(ss1,pT,ss2-ss1,pH);
+  ctx.strokeStyle = 'rgba(21,101,192,0.15)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.strokeRect(ss1,pT,ss2-ss1,pH); ctx.setLineDash([]);
+  ctx.font = '600 11px DM Sans, system-ui, sans-serif'; ctx.fillStyle = '#1565C0';
+  ctx.textAlign = 'center'; ctx.fillText('Sweet spot', (ss1+ss2)/2, pT+16);
+
+  // Axes
+  ctx.strokeStyle = '#b4b2a9'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pL,pT); ctx.lineTo(pL,pT+pH); ctx.lineTo(pL+pW,pT+pH); ctx.stroke();
+
+  // Labels
+  ctx.save(); ctx.translate(14,pT+pH/2); ctx.rotate(-Math.PI/2);
+  ctx.font = '500 11px DM Sans, system-ui, sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#1565C0'; ctx.fillText('Qualità', 0, 0); ctx.restore();
+
+  ctx.font = '500 11px DM Sans, system-ui, sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#5f5e5a'; ctx.fillText('Gruppi KV (g)  →', pL+pW/2, h-6);
+
+  // Legend
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#1565C0'; ctx.font = '500 10px DM Sans, system-ui, sans-serif';
+  ctx.fillText('— qualità', pL+pW, pT-6);
+  ctx.fillStyle = '#993C1D';
+  ctx.fillText('- - cache', pL+pW-70, pT-6);
+}
+
+// ── KaTeX ──
+function renderFormulas() {
+  document.getElementById('cacheFormula').innerHTML =
+    katex.renderToString('\\text{KV Cache} = 2 \\times g \\times L \\times n_{\\text{ctx}} \\times d_k \\qquad (g = h \\text{ per MHA},\\; g = 1 \\text{ per MQA})', {throwOnError:false});
+}
+
+// ── Init ──
+function init() {
+  drawArch('cMHA','mha'); drawArch('cGQA','gqa'); drawArch('cMQA','mqa');
+  animateBars(); updateConfig(); drawTradeoff(); renderFormulas();
+}
+init();
+window.addEventListener('resize', () => {
+  drawArch('cMHA','mha'); drawArch('cGQA','gqa'); drawArch('cMQA','mqa');
+  drawTradeoff();
+});
+</script>
+</body>
+</html>
