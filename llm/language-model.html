@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cos'è un Language Model</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-50: #EEEDFE; --purple-600: #534AB7; --purple-800: #3C3489;
+  --teal-50: #E1F5EE; --teal-600: #0F6E56; --teal-800: #085041;
+  --amber-50: #FAEEDA; --amber-400: #BA7517; --amber-600: #854F0B; --amber-800: #633806;
+  --line-rgb: 83,74,183;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg-page); color: var(--text-primary);
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  padding: 2rem 1rem;
+}
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+.sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; }
+.card-wrap {
+  background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: 12px;
+  padding: 1.5rem; max-width: 760px; width: 100%;
+}
+.card-wrap .katex { font-size: 1.15em; }
+.section-label { font-size: 14px; font-weight: 500; color: var(--text-tertiary); text-align: center; margin: 16px 0 8px; }
+
+.diagram { display: flex; align-items: center; justify-content: center; gap: 0; margin: 20px 0; flex-wrap: wrap; }
+.input-col { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.input-tok {
+  display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 8px;
+  font-size: 14px; font-weight: 500; color: var(--text-primary); transition: all 0.25s;
+  min-width: 120px; justify-content: space-between;
+}
+.input-tok .idx { font-size: 12px; color: var(--text-tertiary); }
+.input-tok.given { background: var(--teal-50); border: 1px solid var(--teal-600); color: var(--teal-800); }
+.input-tok.generated { background: var(--purple-50); border: 1px solid var(--purple-600); color: var(--purple-800); }
+
+.arrow-col { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 16px; }
+.arrow-line { width: 50px; height: 2px; background: var(--border-mid); position: relative; }
+.arrow-line::after {
+  content: ''; position: absolute; right: -2px; top: -5px;
+  border: 6px solid transparent; border-left: 8px solid var(--border-mid);
+}
+
+.lm-box {
+  background: var(--amber-50); border: 2px solid var(--amber-400); border-radius: 12px;
+  padding: 20px 28px; text-align: center; min-width: 160px;
+}
+.lm-box .lm-title { font-size: 16px; font-weight: 700; color: var(--amber-800); }
+.lm-box .lm-sub { font-size: 12px; color: var(--amber-600); margin-top: 2px; }
+
+.output-col { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.output-header { font-size: 12px; font-weight: 500; color: var(--text-tertiary); margin-bottom: 4px; text-align: center; width: 100%; }
+.output-row {
+  display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px;
+  font-size: 13px; font-weight: 500; transition: all 0.3s; width: 100%;
+}
+.output-row .word { min-width: 70px; }
+.output-row .pct { font-weight: 600; min-width: 36px; text-align: right; }
+.output-bar-wrap { flex: 1; height: 10px; background: var(--bg-secondary); border-radius: 5px; min-width: 60px; overflow: hidden; }
+.output-bar { height: 100%; border-radius: 5px; transition: width 0.4s; }
+
+.step-controls { display: flex; justify-content: center; gap: 8px; margin: 14px 0 6px; }
+.step-btn {
+  padding: 7px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: 1.5px solid var(--border-light); transition: all 0.2s;
+  background: var(--bg-secondary); color: var(--text-primary); user-select: none;
+}
+.step-btn:hover { border-color: var(--border-mid); }
+.step-btn.active { background: var(--purple-600); color: #fff; border-color: var(--purple-600); }
+
+.gen-sequence { display: flex; justify-content: center; gap: 4px; margin: 10px 0; flex-wrap: wrap; }
+.gen-tok {
+  padding: 7px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.3s;
+}
+.gen-given { background: var(--teal-50); color: var(--teal-800); }
+.gen-generated { background: var(--purple-50); color: var(--purple-800); }
+.gen-current { background: var(--amber-50); color: var(--amber-800); border: 1.5px dashed var(--amber-400); }
+.gen-future { background: var(--bg-secondary); color: var(--text-tertiary); border: 1px dashed var(--border-mid); }
+
+.formula-block {
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: 8px; padding: 14px 20px; margin: 12px auto; max-width: 680px; text-align: center;
+  overflow-x: auto;
+}
+.formula-block .katex { font-size: 1.15em; }
+
+.note-box {
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: 8px; padding: 14px 18px; margin: 14px auto 0; max-width: 600px;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+}
+.note-box .katex { font-size: 1.0em; }
+
+.callout {
+  background: #E6F1FB; border-left: 3px solid #378ADD; border-radius: 0 8px 8px 0;
+  padding: 12px 16px; margin: 14px auto 0; max-width: 600px;
+  font-size: 13px; color: #0C447C; line-height: 1.6;
+}
+.callout .katex { font-size: 1.0em; }
+
+.legend-row { display: flex; justify-content: center; gap: 18px; margin-top: 16px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<h1>Cos'è un Language Model</h1>
+<p class="sub">Un sistema che predice la prossima parola dato il contesto precedente</p>
+<div class="card-wrap">
+
+  <div class="section-label">Clicca su un passo per simulare la generazione token per token</div>
+  <div class="step-controls" id="steps"></div>
+
+  <div class="gen-sequence" id="gen-seq"></div>
+
+  <div class="diagram" id="diagram"></div>
+
+  <div class="formula-block" id="formula"></div>
+
+  <div class="note-box" id="note-box"></div>
+
+  <div class="callout" id="callout"></div>
+
+  <div class="legend-row">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--teal-50);border:1px solid var(--teal-600)"></div>Contesto dato</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple-50);border:1px solid var(--purple-600)"></div>Già generato</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--amber-50);border:1.5px dashed var(--amber-400)"></div>Da predire</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--bg-secondary);border:1px dashed var(--border-mid)"></div>Futuro</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const K = katex;
+const ro = { throwOnError: false };
+function tex(t) { return K.renderToString(t, ro); }
+function texBlock(el, t) { K.render(t, el, { throwOnError: false, displayMode: true }); }
+
+const given = ["Il", "gatto"];
+const toGenerate = ["si", "sedette", "sul", "tappeto"];
+const fullSentence = given.concat(toGenerate);
+
+const predictions = [
+  { candidates: [
+    { word: "si", pct: 22 }, { word: "nero", pct: 18 }, { word: "corre", pct: 10 },
+    { word: "dorme", pct: 14 }, { word: "mangia", pct: 9 }, { word: "...", pct: 27 }
+  ]},
+  { candidates: [
+    { word: "sedette", pct: 25 }, { word: "fermò", pct: 18 }, { word: "mosse", pct: 12 },
+    { word: "alzò", pct: 10 }, { word: "nascose", pct: 8 }, { word: "...", pct: 27 }
+  ]},
+  { candidates: [
+    { word: "sul", pct: 45 }, { word: "vicino", pct: 15 }, { word: "davanti", pct: 10 },
+    { word: "sotto", pct: 8 }, { word: "per", pct: 5 }, { word: "...", pct: 17 }
+  ]},
+  { candidates: [
+    { word: "tappeto", pct: 30 }, { word: "divano", pct: 25 }, { word: "letto", pct: 12 },
+    { word: "prato", pct: 10 }, { word: "tavolo", pct: 8 }, { word: "...", pct: 15 }
+  ]}
+];
+
+let step = 0;
+
+function render() {
+  const pred = predictions[step];
+  const maxPct = Math.max(...pred.candidates.map(c => c.pct));
+  const contextTokens = given.concat(toGenerate.slice(0, step));
+  const predictingIdx = given.length + step;
+
+  const stepsEl = document.getElementById('steps');
+  stepsEl.innerHTML = '';
+  for (let i = 0; i < predictions.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'step-btn' + (i === step ? ' active' : '');
+    d.textContent = 'Passo ' + (i + 1);
+    d.onclick = () => { step = i; render(); };
+    stepsEl.appendChild(d);
+  }
+
+  const genSeq = document.getElementById('gen-seq');
+  genSeq.innerHTML = '';
+  fullSentence.forEach((t, i) => {
+    const d = document.createElement('div');
+    d.className = 'gen-tok';
+    if (i < given.length) {
+      d.className += ' gen-given';
+      d.textContent = t;
+    } else if (i < predictingIdx) {
+      d.className += ' gen-generated';
+      d.textContent = t;
+    } else if (i === predictingIdx) {
+      d.className += ' gen-current';
+      d.textContent = t + '?';
+    } else {
+      d.className += ' gen-future';
+      d.textContent = '???';
+    }
+    genSeq.appendChild(d);
+  });
+
+  let diagHtml = '<div class="input-col">';
+  contextTokens.forEach((t, i) => {
+    const isGiven = i < given.length;
+    diagHtml += '<div class="input-tok ' + (isGiven ? 'given' : 'generated') + '">'
+      + '<span class="idx">' + tex('x_{' + (i+1) + '}') + '</span>'
+      + '<span>' + t + '</span></div>';
+  });
+  diagHtml += '</div>';
+
+  diagHtml += '<div class="arrow-col"><div class="arrow-line"></div></div>';
+
+  diagHtml += '<div class="lm-box"><div class="lm-title">Language Model</div>'
+    + '<div class="lm-sub">Transformer decoder</div></div>';
+
+  diagHtml += '<div class="arrow-col"><div class="arrow-line"></div></div>';
+
+  diagHtml += '<div class="output-col">';
+  diagHtml += '<div class="output-header">' + tex('x_{' + (predictingIdx + 1) + '}') + ' — token predetto</div>';
+  pred.candidates.forEach(c => {
+    const barW = (c.pct / maxPct) * 100;
+    const isTop = c.pct === maxPct && c.word !== '...';
+    const barColor = isTop ? 'var(--purple-600)' : 'var(--border-mid)';
+    const rowStyle = isTop ? 'background:var(--purple-50);' : '';
+    diagHtml += '<div class="output-row" style="' + rowStyle + '">'
+      + '<span class="word">' + (c.word === '...' ? '<span style="color:var(--text-tertiary)">' + c.word + '</span>' : c.word) + '</span>'
+      + '<span class="pct">' + c.pct + '%</span>'
+      + '<div class="output-bar-wrap"><div class="output-bar" style="width:' + barW + '%;background:' + barColor + '"></div></div>'
+      + '</div>';
+  });
+  diagHtml += '</div>';
+
+  document.getElementById('diagram').innerHTML = diagHtml;
+
+  const formulaEl = document.getElementById('formula');
+  const ctxShort = contextTokens.length <= 3
+    ? contextTokens.map(t => '\\text{"' + t + '"}').join(',\\;')
+    : '\\text{"' + contextTokens[0] + '"},\\;\\ldots,\\;\\text{"' + contextTokens[contextTokens.length - 1] + '"}';
+  const predicted = toGenerate[step];
+  const pctVal = pred.candidates.find(c => c.word === predicted);
+  texBlock(formulaEl,
+    'P(x_{' + (predictingIdx+1) + '} \\mid ' + ctxShort + ')'
+    + '\\;\\;\\rightarrow\\;\\; P(\\text{"' + predicted + '"}) = ' + (pctVal ? pctVal.pct : '?') + '\\%'
+  );
+
+  const nb = document.getElementById('note-box');
+  if (step === 0) {
+    nb.innerHTML = '<b>Passo 1</b>: dato il contesto "Il gatto", il modello deve predire il terzo token. '
+      + 'Candidati plausibili: "si" (riflessivo), "nero" (aggettivo), "dorme" (verbo)... '
+      + 'La distribuzione è ancora ampia — diverse continuazioni sono ragionevoli.';
+  } else if (step === 1) {
+    nb.innerHTML = '<b>Passo 2</b>: "Il gatto si ___" — il modello capisce che serve un verbo riflessivo. '
+      + '"sedette" emerge al 25%, seguito da "fermò" e "mosse". '
+      + 'La self-attention permette di "guardare" indietro a "gatto" e "si" per determinare il verbo.';
+  } else if (step === 2) {
+    nb.innerHTML = '<b>Passo 3</b>: "Il gatto si sedette ___" — dopo un verbo di posizione, il modello predice una preposizione di luogo. '
+      + '"sul" domina con il 45%. La distribuzione diventa più concentrata (meno entropia).';
+  } else {
+    nb.innerHTML = '<b>Passo 4</b>: "Il gatto si sedette sul ___" — serve un sostantivo di luogo. '
+      + '"tappeto" (30%) e "divano" (25%) competono. Il modello non "sa" la risposta giusta '
+      + '— sceglie in base alla distribuzione di probabilità appresa durante il training.';
+  }
+
+  const callout = document.getElementById('callout');
+  callout.innerHTML = '<b>Il principio fondamentale</b>: un language model calcola '
+    + tex('P(x_t \\mid x_1, x_2, \\ldots, x_{t-1})')
+    + ' — la probabilità del prossimo token dato il contesto precedente. '
+    + 'La generazione procede un token alla volta: ad ogni passo il modello campiona dalla distribuzione e aggiunge il risultato al contesto. '
+    + 'È la <b>causal self-attention</b> in azione: ogni token può guardare solo i precedenti, mai il futuro.';
+}
+
+render();
+</script>
+</body>
+</html>
