@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PagedAttention — Infografica Interattiva</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-50: #EEEDFE; --purple-100: #DEDCFD;
+  --purple-600: #534AB7; --purple-800: #3C3489;
+  --teal-50: #E1F5EE; --teal-100: #C3EBD9;
+  --teal-600: #0F6E56; --teal-800: #085041;
+  --coral-50: #FAECE7; --coral-100: #F5D9CF;
+  --coral-600: #993C1D; --coral-800: #712B13;
+  --amber-50: #FFF8E1; --amber-100: #FFECB3;
+  --amber-600: #F57F17; --amber-800: #E65100;
+  --blue-50: #E3F2FD; --blue-100: #BBDEFB;
+  --blue-600: #1565C0; --blue-800: #0D47A1;
+  --green-50: #E8F5E9; --green-100: #C8E6C9;
+  --green-600: #2E7D32; --green-800: #1B5E20;
+  --red-50: #FFEBEE; --red-100: #FFCDD2;
+  --red-600: #D32F2F; --red-800: #B71C1C;
+  --pink-50: #FCE4EC; --pink-100: #F8BBD0;
+  --pink-600: #C2185B; --pink-800: #880E4F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-page);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  display: flex; justify-content: center;
+  padding: 24px 16px; min-height: 100vh;
+}
+
+.wrap { max-width: 760px; width: 100%; }
+.wrap .katex { font-size: 1.15em; }
+
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 32px 28px;
+  margin-bottom: 16px;
+}
+
+h1 { font-weight: 700; font-size: 28px; line-height: 1.3; margin-bottom: 6px; }
+h2 { font-weight: 700; font-size: 20px; margin-bottom: 14px; }
+h3 { font-weight: 700; font-size: 17px; margin-bottom: 8px; }
+
+.subtitle {
+  font-size: 15px; font-weight: 400; color: var(--text-secondary); line-height: 1.55;
+}
+
+.stage-label {
+  font-weight: 500; font-size: 14px; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+}
+
+/* ── Analogy cards ── */
+.analogy-pair {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin: 16px 0;
+}
+
+.ana-card {
+  border-radius: 10px; padding: 20px 16px; text-align: center;
+}
+
+.ana-card.os { background: var(--purple-50); border: 1px solid var(--purple-100); }
+.ana-card.gpu { background: var(--teal-50); border: 1px solid var(--teal-100); }
+
+.ana-icon { font-size: 36px; margin-bottom: 10px; }
+
+.ana-card h3 { margin-bottom: 6px; }
+.ana-card.os h3 { color: var(--purple-800); }
+.ana-card.gpu h3 { color: var(--teal-800); }
+
+.ana-card p { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
+
+.ana-mapping {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 6px; margin-top: 14px; align-items: center;
+}
+
+.ana-map-item {
+  padding: 8px 10px; border-radius: 6px;
+  font-size: 13px; font-weight: 500; text-align: center;
+}
+
+.ana-map-item.os-item { background: var(--purple-50); color: var(--purple-800); }
+.ana-map-item.gpu-item { background: var(--teal-50); color: var(--teal-800); }
+.ana-map-arrow { color: var(--text-tertiary); font-size: 16px; text-align: center; }
+
+/* ── Memory comparison ── */
+.mem-compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin: 16px 0;
+}
+
+.mem-card {
+  border-radius: 10px; padding: 16px; position: relative;
+}
+
+.mem-card.contiguous { background: var(--coral-50); border: 1px solid var(--coral-100); }
+.mem-card.paged { background: var(--teal-50); border: 1px solid var(--teal-100); }
+
+.mem-card h3 { margin-bottom: 10px; font-size: 15px; }
+.mem-card.contiguous h3 { color: var(--coral-800); }
+.mem-card.paged h3 { color: var(--teal-800); }
+
+.mem-grid {
+  display: grid; grid-template-columns: repeat(8, 1fr);
+  gap: 3px; margin-bottom: 10px;
+}
+
+.mem-cell {
+  aspect-ratio: 1; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 600; color: #fff;
+  transition: all 0.3s ease;
+}
+
+.mem-cell.free { background: var(--bg-secondary); border: 1px solid var(--border-light); }
+.mem-cell.used-a { background: var(--purple-600); }
+.mem-cell.used-b { background: var(--blue-600); }
+.mem-cell.used-c { background: var(--teal-600); }
+.mem-cell.reserved { background: var(--amber-100); border: 1px dashed var(--amber-600); }
+.mem-cell.waste { background: var(--red-100); border: 1px dashed var(--red-600); }
+
+.mem-legend {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;
+}
+
+.leg-item {
+  display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-tertiary);
+}
+
+.leg-dot {
+  width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+}
+
+/* ── Page table simulator ── */
+.sim-area { margin: 16px 0; }
+
+.sim-controls {
+  display: flex; gap: 8px; justify-content: center;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+
+.sim-btn {
+  padding: 8px 16px; border-radius: 8px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 600; font-size: 13px;
+  color: var(--text-secondary); cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sim-btn:hover { border-color: var(--teal-600); color: var(--teal-600); }
+
+.sim-btn.primary {
+  background: var(--teal-600); color: #fff; border-color: var(--teal-600);
+}
+
+.sim-btn.primary:hover { background: var(--teal-800); }
+
+.sim-btn.danger {
+  background: var(--coral-50); color: var(--coral-600); border-color: var(--coral-100);
+}
+
+.sim-btn.danger:hover { background: var(--coral-100); }
+
+.sim-layout {
+  display: grid; grid-template-columns: 200px 1fr;
+  gap: 16px; align-items: start;
+}
+
+.page-tables { display: flex; flex-direction: column; gap: 10px; }
+
+.pt-block {
+  border-radius: 8px; padding: 10px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+}
+
+.pt-header {
+  font-weight: 600; font-size: 13px; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.pt-dot {
+  width: 10px; height: 10px; border-radius: 3px;
+}
+
+.pt-entries {
+  display: flex; gap: 3px; flex-wrap: wrap;
+}
+
+.pt-entry {
+  width: 28px; height: 22px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 600; color: #fff;
+  cursor: pointer; transition: all 0.2s ease;
+}
+
+.pt-entry:hover { transform: scale(1.15); }
+
+.physical-mem {
+  background: var(--bg-secondary); border-radius: 10px;
+  padding: 14px;
+}
+
+.phys-title {
+  font-weight: 600; font-size: 13px; color: var(--text-tertiary);
+  margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+.phys-grid {
+  display: grid; grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+}
+
+.phys-cell {
+  aspect-ratio: 1.2; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 600; color: #fff;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.phys-cell.free {
+  background: var(--bg-primary); border: 1px solid var(--border-light);
+  color: var(--text-tertiary);
+}
+
+.phys-cell.highlight {
+  box-shadow: 0 0 0 2px var(--amber-600);
+  transform: scale(1.1);
+  z-index: 2;
+}
+
+.sim-explain {
+  background: var(--bg-secondary); border-radius: 10px;
+  padding: 14px 18px; margin-top: 14px;
+  font-size: 14px; line-height: 1.6; color: var(--text-secondary);
+}
+
+.sim-explain .label {
+  font-weight: 600; font-size: 14px; color: var(--teal-600); margin-bottom: 3px;
+}
+
+/* ── Waste comparison bars ── */
+.waste-bars { margin: 16px 0; }
+
+.waste-bar-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px;
+}
+
+.waste-bar-label {
+  width: 120px; font-size: 14px; font-weight: 500;
+  color: var(--text-secondary); text-align: right; flex-shrink: 0;
+}
+
+.waste-bar-track {
+  flex: 1; height: 32px; background: var(--bg-secondary);
+  border-radius: 6px; overflow: hidden; position: relative;
+  display: flex;
+}
+
+.waste-segment {
+  height: 100%; display: flex; align-items: center;
+  justify-content: center; font-size: 11px; font-weight: 600;
+  color: #fff; transition: width 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.waste-value {
+  width: 50px; font-size: 14px; font-weight: 700; text-align: left;
+  flex-shrink: 0; margin-left: 8px;
+}
+
+/* ── Prefix sharing ── */
+.prefix-demo { margin: 16px 0; }
+
+.prefix-row {
+  display: flex; gap: 3px; align-items: center;
+  margin-bottom: 6px;
+}
+
+.prefix-label {
+  width: 80px; font-size: 13px; font-weight: 500;
+  color: var(--text-secondary); text-align: right;
+  flex-shrink: 0; margin-right: 6px;
+}
+
+.prefix-block {
+  height: 30px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: #fff;
+  padding: 0 8px; transition: all 0.3s ease;
+}
+
+.prefix-block.shared { background: var(--green-600); }
+.prefix-block.unique-a { background: var(--purple-600); }
+.prefix-block.unique-b { background: var(--blue-600); }
+.prefix-block.unique-c { background: var(--pink-600); }
+
+/* ── Stats row ── */
+.stats-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 16px;
+}
+
+.stat-box {
+  border-radius: 8px; padding: 14px 10px; text-align: center;
+}
+
+.stat-number { font-weight: 700; font-size: 22px; line-height: 1.2; }
+.stat-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); margin-top: 3px; }
+
+.stat-box.teal { background: var(--teal-50); }
+.stat-box.teal .stat-number { color: var(--teal-800); }
+.stat-box.green { background: var(--green-50); }
+.stat-box.green .stat-number { color: var(--green-800); }
+.stat-box.blue { background: var(--blue-50); }
+.stat-box.blue .stat-number { color: var(--blue-800); }
+
+/* ── Insight ── */
+.insight {
+  display: flex; gap: 12px; align-items: flex-start;
+  border-radius: 10px; padding: 16px 18px; margin-top: 16px;
+}
+
+.insight.amber { background: var(--amber-50); border: 1px solid var(--amber-100); }
+.insight.teal { background: var(--teal-50); border: 1px solid var(--teal-100); }
+.insight.red { background: var(--red-50); border: 1px solid var(--red-100); }
+.insight.green { background: var(--green-50); border: 1px solid var(--green-100); }
+
+.insight-icon { font-size: 20px; flex-shrink: 0; line-height: 1.4; }
+.insight p { font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .card { padding: 20px 16px; }
+  h1 { font-size: 24px; }
+  .analogy-pair, .mem-compare { grid-template-columns: 1fr; }
+  .sim-layout { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr; }
+  .ana-mapping { grid-template-columns: 1fr; }
+  .ana-map-arrow { transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="card">
+    <h1>PagedAttention</h1>
+    <p class="subtitle">Gestire la KV Cache come un sistema operativo gestisce la memoria virtuale: blocchi non contigui, allocazione dinamica, zero spreco. L'idea alla base di <strong>vLLM</strong> (Kwon et al., 2023).</p>
+  </div>
+
+  <!-- Stage 1: The problem -->
+  <div class="card">
+    <div class="stage-label">Stage 1 — Il problema: spreco di memoria GPU</div>
+    <h2>Perché la KV Cache tradizionale è inefficiente</h2>
+    <p class="subtitle" style="margin-bottom:14px;">Nell'inference standard, la KV Cache di ogni richiesta è un <strong>blocco contiguo</strong> pre-allocato per la lunghezza massima. Ma le richieste hanno lunghezze diverse e imprevedibili.</p>
+
+    <div class="mem-compare">
+      <div class="mem-card contiguous">
+        <h3>Cache contigua (tradizionale)</h3>
+        <div class="mem-grid" id="contiguousGrid"></div>
+        <div class="mem-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--purple-600);"></div> Req A</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--blue-600);"></div> Req B</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--red-100);border:1px dashed var(--red-600);"></div> Spreco</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--bg-secondary);border:1px solid var(--border-light);"></div> Libero</div>
+        </div>
+      </div>
+      <div class="mem-card paged">
+        <h3>Cache paginata (PagedAttention)</h3>
+        <div class="mem-grid" id="pagedGrid"></div>
+        <div class="mem-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--purple-600);"></div> Req A</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--blue-600);"></div> Req B</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--teal-600);"></div> Req C</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--bg-secondary);border:1px solid var(--border-light);"></div> Libero</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight red">
+      <span class="insight-icon">⚠️</span>
+      <p><strong>Frammentazione interna:</strong> se allochi 2048 slot per una richiesta che ne usa solo 500, l'80% della memoria è sprecato ma inutilizzabile da altri. Studi mostrano che i sistemi tradizionali <strong>sprecano il 60–80%</strong> della memoria KV Cache per frammentazione e pre-allocazione.</p>
+    </div>
+  </div>
+
+  <!-- Stage 2: OS analogy -->
+  <div class="card">
+    <div class="stage-label">Stage 2 — L'intuizione: memoria virtuale per la GPU</div>
+    <h2>L'analogia con il sistema operativo</h2>
+
+    <div class="analogy-pair">
+      <div class="ana-card os">
+        <div class="ana-icon">💻</div>
+        <h3>Memoria Virtuale (OS)</h3>
+        <p>I processi vedono indirizzi virtuali contigui, ma il SO mappa ogni <strong>pagina</strong> (4 KB) su frame fisici sparsi nella RAM. Nessun bisogno di blocchi contigui.</p>
+      </div>
+      <div class="ana-card gpu">
+        <div class="ana-icon">🔥</div>
+        <h3>PagedAttention (GPU)</h3>
+        <p>Ogni richiesta vede una KV Cache logicamente contigua, ma fisicamente è divisa in <strong>blocchi</strong> (es. 16 token) sparsi nella GPU memory. Nessuna pre-allocazione.</p>
+      </div>
+    </div>
+
+    <div class="ana-mapping">
+      <div class="ana-map-item os-item">Processo</div>
+      <div class="ana-map-arrow">↔</div>
+      <div class="ana-map-item gpu-item">Richiesta</div>
+
+      <div class="ana-map-item os-item">Pagina virtuale</div>
+      <div class="ana-map-arrow">↔</div>
+      <div class="ana-map-item gpu-item">Blocco KV logico</div>
+
+      <div class="ana-map-item os-item">Frame fisico</div>
+      <div class="ana-map-arrow">↔</div>
+      <div class="ana-map-item gpu-item">Blocco GPU fisico</div>
+
+      <div class="ana-map-item os-item">Page table</div>
+      <div class="ana-map-arrow">↔</div>
+      <div class="ana-map-item gpu-item">Block table</div>
+    </div>
+
+    <div class="insight amber">
+      <span class="insight-icon">💡</span>
+      <p>Come nella memoria virtuale, la <strong>block table</strong> di ogni richiesta mappa i blocchi logici (0, 1, 2, ...) ai blocchi fisici nella GPU (che possono essere ovunque). Il kernel di attenzione usa questa tabella per raccogliere i K/V corretti durante il calcolo.</p>
+    </div>
+  </div>
+
+  <!-- Stage 3: Interactive simulator -->
+  <div class="card">
+    <div class="stage-label">Stage 3 — Simulatore interattivo</div>
+    <h2>Aggiungi richieste e osserva l'allocazione</h2>
+    <p class="subtitle" style="margin-bottom:14px;">Ogni blocco fisico contiene 16 token di KV Cache. Premi i bottoni per aggiungere richieste e vedere come vengono allocati i blocchi.</p>
+
+    <div class="sim-controls">
+      <button class="sim-btn primary" id="btnAddReq">+ Nuova richiesta</button>
+      <button class="sim-btn" id="btnGenerate">Genera token</button>
+      <button class="sim-btn danger" id="btnFinish">Completa una richiesta</button>
+      <button class="sim-btn" id="btnReset">Reset</button>
+    </div>
+
+    <div class="sim-layout">
+      <div class="page-tables" id="pageTables">
+        <div style="font-size:13px;color:var(--text-tertiary);text-align:center;padding:20px 0;">Nessuna richiesta attiva</div>
+      </div>
+      <div class="physical-mem">
+        <div class="phys-title">Memoria fisica GPU (32 blocchi)</div>
+        <div class="phys-grid" id="physGrid"></div>
+      </div>
+    </div>
+
+    <div class="sim-explain" id="simExplain">
+      <div class="label">Come funziona</div>
+      Premi "+ Nuova richiesta" per aggiungere una richiesta. Ogni richiesta ottiene blocchi fisici on-demand. "Genera token" simula la generazione e alloca nuovi blocchi quando serve. "Completa" libera i blocchi di una richiesta terminata.
+    </div>
+  </div>
+
+  <!-- Stage 4: Memory waste comparison -->
+  <div class="card">
+    <div class="stage-label">Stage 4 — Quanto si risparmia</div>
+    <h2>Spreco di memoria: prima e dopo</h2>
+
+    <div class="waste-bars">
+      <div class="waste-bar-row">
+        <div class="waste-bar-label">Tradizionale</div>
+        <div class="waste-bar-track">
+          <div class="waste-segment" id="wUsed" style="background:var(--purple-600);width:0;">Usato</div>
+          <div class="waste-segment" id="wReserved" style="background:var(--amber-200);width:0;color:var(--amber-800);">Riservato</div>
+          <div class="waste-segment" id="wFrag" style="background:var(--red-200);width:0;color:var(--red-800);">Framm.</div>
+        </div>
+        <div class="waste-value" style="color:var(--red-600);">~38%</div>
+      </div>
+      <div class="waste-bar-row">
+        <div class="waste-bar-label">PagedAttention</div>
+        <div class="waste-bar-track">
+          <div class="waste-segment" id="pUsed" style="background:var(--teal-600);width:0;">Usato</div>
+          <div class="waste-segment" id="pWaste" style="background:var(--red-200);width:0;color:var(--red-800);"></div>
+        </div>
+        <div class="waste-value" style="color:var(--teal-600);">~4%</div>
+      </div>
+    </div>
+
+    <p class="subtitle" style="margin-top:6px;font-size:13px;">Lo spreco di PagedAttention è limitato all'ultimo blocco di ogni richiesta (frammentazione interna del blocco finale). Con blocchi da 16 token, lo spreco medio è di soli ~8 token per richiesta.</p>
+
+    <div class="stats-row">
+      <div class="stat-box teal">
+        <div class="stat-number">2–4×</div>
+        <div class="stat-label">Più richieste in parallelo</div>
+      </div>
+      <div class="stat-box green">
+        <div class="stat-number">&lt;4%</div>
+        <div class="stat-label">Spreco di memoria</div>
+      </div>
+      <div class="stat-box blue">
+        <div class="stat-number">~0</div>
+        <div class="stat-label">Frammentazione esterna</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 5: Prefix sharing / Copy-on-Write -->
+  <div class="card">
+    <div class="stage-label">Stage 5 — Bonus: condivisione del prefisso</div>
+    <h2>Copy-on-Write per i prompt condivisi</h2>
+    <p class="subtitle" style="margin-bottom:14px;">Se più richieste condividono lo stesso system prompt (es. in un chatbot), i loro blocchi KV iniziali possono puntare agli <strong>stessi blocchi fisici</strong>. Come il copy-on-write dei sistemi operativi.</p>
+
+    <div class="prefix-demo">
+      <div class="prefix-row">
+        <div class="prefix-label">Req A:</div>
+        <div class="prefix-block shared" style="flex:3;">System prompt (condiviso)</div>
+        <div class="prefix-block unique-a" style="flex:2;">Risposta A</div>
+      </div>
+      <div class="prefix-row">
+        <div class="prefix-label">Req B:</div>
+        <div class="prefix-block shared" style="flex:3;">System prompt (condiviso)</div>
+        <div class="prefix-block unique-b" style="flex:1;">Risp B</div>
+      </div>
+      <div class="prefix-row">
+        <div class="prefix-label">Req C:</div>
+        <div class="prefix-block shared" style="flex:3;">System prompt (condiviso)</div>
+        <div class="prefix-block unique-c" style="flex:1.5;">Risposta C</div>
+      </div>
+      <div class="prefix-row" style="margin-top:10px;">
+        <div class="prefix-label" style="font-size:11px;color:var(--text-tertiary);">Fisico:</div>
+        <div class="prefix-block shared" style="flex:3;opacity:1;">1 sola copia in memoria</div>
+        <div class="prefix-block unique-a" style="flex:0.7;font-size:10px;">A</div>
+        <div class="prefix-block unique-b" style="flex:0.4;font-size:10px;">B</div>
+        <div class="prefix-block unique-c" style="flex:0.5;font-size:10px;">C</div>
+      </div>
+    </div>
+
+    <div class="insight green">
+      <span class="insight-icon">🔑</span>
+      <p>Per applicazioni con system prompt lunghi (es. 2000 token condivisi + 500 token per utente), il prefix sharing riduce la memoria KV del <strong>60–80%</strong>. Questo è possibile solo con PagedAttention, perché i blocchi sono referenziabili tramite puntatori nella block table — impossibile con allocazione contigua.</p>
+    </div>
+  </div>
+
+  <!-- Stage 6: Context -->
+  <div class="card">
+    <div class="stage-label">Stage 6 — Nel contesto dell'ecosistema</div>
+    <h2>vLLM e l'adozione di PagedAttention</h2>
+
+    <div class="step-row" style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-light);">
+      <div class="step-num" style="width:32px;height:32px;min-width:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;background:var(--teal-600);color:#fff;">1</div>
+      <div>
+        <h4 style="font-weight:600;font-size:15px;margin-bottom:3px;">vLLM (2023)</h4>
+        <p style="font-size:14px;line-height:1.55;color:var(--text-secondary);">Il framework open-source che ha introdotto PagedAttention. È diventato lo standard per il serving di LLM in produzione, usato da Chatbot Arena, Anyscale, e molti altri.</p>
+      </div>
+    </div>
+    <div class="step-row" style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-light);">
+      <div class="step-num" style="width:32px;height:32px;min-width:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;background:var(--blue-600);color:#fff;">2</div>
+      <div>
+        <h4 style="font-weight:600;font-size:15px;margin-bottom:3px;">Combinazione con FlashAttention</h4>
+        <p style="font-size:14px;line-height:1.55;color:var(--text-secondary);">PagedAttention e FlashAttention risolvono problemi diversi e complementari: PagedAttention gestisce l'<em>allocazione</em> della KV Cache; FlashAttention ottimizza il <em>calcolo</em> dell'attenzione. I framework moderni li usano insieme.</p>
+      </div>
+    </div>
+    <div class="step-row" style="display:flex;gap:14px;padding:14px 0;">
+      <div class="step-num" style="width:32px;height:32px;min-width:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;background:var(--green-600);color:#fff;">3</div>
+      <div>
+        <h4 style="font-weight:600;font-size:15px;margin-bottom:3px;">Continuous batching</h4>
+        <p style="font-size:14px;line-height:1.55;color:var(--text-secondary);">PagedAttention abilita il <strong>continuous batching</strong>: le richieste possono entrare e uscire dal batch in qualsiasi momento, perché la memoria si alloca e libera dinamicamente. Niente più padding all'interno del batch.</p>
+      </div>
+    </div>
+
+    <div class="insight teal">
+      <span class="insight-icon">🚀</span>
+      <p><strong>In sintesi:</strong> PagedAttention ha fatto per l'inference degli LLM quello che la memoria virtuale ha fatto per i sistemi operativi — ha disaccoppiato la vista logica dalla realtà fisica, eliminando la frammentazione e abilitando la condivisione. Il risultato: 2–4× più throughput con la stessa GPU.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Stage 1: Memory grids ──
+function buildContiguousGrid() {
+  const grid = document.getElementById('contiguousGrid');
+  // 8x8 grid, Req A takes slots 0-15 (but only uses 10), Req B takes 16-31 (uses 7)
+  const layout = [];
+  for (let i = 0; i < 64; i++) {
+    if (i < 10) layout.push('used-a');
+    else if (i < 16) layout.push('waste');      // reserved but unused by A
+    else if (i < 23) layout.push('used-b');
+    else if (i < 32) layout.push('waste');       // reserved but unused by B
+    else layout.push('free');
+  }
+  grid.innerHTML = layout.map(c => `<div class="mem-cell ${c}"></div>`).join('');
+}
+
+function buildPagedGrid() {
+  const grid = document.getElementById('pagedGrid');
+  // Scattered allocation, no waste, 3 requests fit
+  const layout = [];
+  const pattern = [
+    'used-a','used-a','used-b','used-c','used-a','used-b','used-c','used-a',
+    'used-b','used-a','used-c','used-b','used-a','used-c','used-a','used-b',
+    'used-c','used-a','used-b','used-c','used-a','free','free','free',
+    'free','free','free','free','free','free','free','free',
+    'free','free','free','free','free','free','free','free',
+    'free','free','free','free','free','free','free','free',
+    'free','free','free','free','free','free','free','free',
+    'free','free','free','free','free','free','free','free',
+  ];
+  grid.innerHTML = pattern.map(c => `<div class="mem-cell ${c}"></div>`).join('');
+}
+
+// ── Stage 3: Simulator ──
+const PHYS_BLOCKS = 32;
+const BLOCK_SIZE = 16;
+const reqColors = ['var(--purple-600)', 'var(--blue-600)', 'var(--teal-600)', 'var(--pink-600)', 'var(--amber-600)', 'var(--coral-600)'];
+const reqNames = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+let requests = []; // {name, color, blocks: [physIdx], tokens: number}
+let physBlocks = new Array(PHYS_BLOCKS).fill(null); // null = free, or {reqName, color}
+let nextReqIdx = 0;
+
+function allocBlock(reqName, color) {
+  const idx = physBlocks.indexOf(null);
+  if (idx === -1) return -1;
+  physBlocks[idx] = { reqName, color };
+  return idx;
+}
+
+function freeBlocks(reqName) {
+  for (let i = 0; i < physBlocks.length; i++) {
+    if (physBlocks[i] && physBlocks[i].reqName === reqName) physBlocks[i] = null;
+  }
+}
+
+function addRequest() {
+  if (nextReqIdx >= reqNames.length) return;
+  const name = reqNames[nextReqIdx];
+  const color = reqColors[nextReqIdx];
+  nextReqIdx++;
+
+  // Initial prompt: 2-4 blocks
+  const promptBlocks = 2 + Math.floor(Math.random() * 3);
+  const tokens = promptBlocks * BLOCK_SIZE - Math.floor(Math.random() * 8);
+  const blocks = [];
+  for (let i = 0; i < promptBlocks; i++) {
+    const idx = allocBlock(name, color);
+    if (idx >= 0) blocks.push(idx);
+  }
+
+  requests.push({ name, color, blocks, tokens });
+  renderSim();
+  updateSimExplain(`Richiesta ${name} aggiunta con ${tokens} token di prompt → ${blocks.length} blocchi fisici allocati (sparsi nella memoria).`);
+}
+
+function generateTokens() {
+  if (requests.length === 0) return;
+  let msg = '';
+  requests.forEach(req => {
+    const newTokens = 8 + Math.floor(Math.random() * 16);
+    req.tokens += newTokens;
+    const neededBlocks = Math.ceil(req.tokens / BLOCK_SIZE);
+    while (req.blocks.length < neededBlocks) {
+      const idx = allocBlock(req.name, req.color);
+      if (idx >= 0) {
+        req.blocks.push(idx);
+        msg += `Req ${req.name}: nuovo blocco fisico #${idx} allocato. `;
+      } else {
+        msg += `Memoria piena! `;
+        break;
+      }
+    }
+  });
+  renderSim();
+  updateSimExplain(msg || 'Token generati, nessun nuovo blocco necessario.');
+}
+
+function finishRequest() {
+  if (requests.length === 0) return;
+  const req = requests.shift();
+  freeBlocks(req.name);
+  renderSim();
+  updateSimExplain(`Richiesta ${req.name} completata. ${req.blocks.length} blocchi liberati — immediatamente disponibili per nuove richieste (nessuna frammentazione esterna).`);
+}
+
+function resetSim() {
+  requests = [];
+  physBlocks = new Array(PHYS_BLOCKS).fill(null);
+  nextReqIdx = 0;
+  renderSim();
+  updateSimExplain('Simulatore resettato. Premi "+ Nuova richiesta" per iniziare.');
+}
+
+function renderSim() {
+  // Page tables
+  const ptDiv = document.getElementById('pageTables');
+  if (requests.length === 0) {
+    ptDiv.innerHTML = '<div style="font-size:13px;color:var(--text-tertiary);text-align:center;padding:20px 0;">Nessuna richiesta attiva</div>';
+  } else {
+    ptDiv.innerHTML = requests.map(req => {
+      const entries = req.blocks.map((phys, i) =>
+        `<div class="pt-entry" style="background:${req.color};" onmouseenter="highlightPhys(${phys})" onmouseleave="unhighlightPhys(${phys})" title="Logico ${i} → Fisico ${phys}">${phys}</div>`
+      ).join('');
+      return `<div class="pt-block">
+        <div class="pt-header"><div class="pt-dot" style="background:${req.color};"></div>Req ${req.name} — ${req.tokens} tok, ${req.blocks.length} blocchi</div>
+        <div class="pt-entries">${entries}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Physical grid
+  const physGrid = document.getElementById('physGrid');
+  physGrid.innerHTML = physBlocks.map((b, i) => {
+    if (b) {
+      return `<div class="phys-cell" id="phys-${i}" style="background:${b.color};" title="Blocco ${i}: Req ${b.reqName}">${b.reqName}</div>`;
+    }
+    return `<div class="phys-cell free" id="phys-${i}" title="Blocco ${i}: libero">${i}</div>`;
+  }).join('');
+}
+
+function highlightPhys(idx) {
+  const el = document.getElementById('phys-' + idx);
+  if (el) el.classList.add('highlight');
+}
+
+function unhighlightPhys(idx) {
+  const el = document.getElementById('phys-' + idx);
+  if (el) el.classList.remove('highlight');
+}
+
+function updateSimExplain(text) {
+  const panel = document.getElementById('simExplain');
+  panel.innerHTML = `<div class="label">Stato</div>${text}`;
+}
+
+document.getElementById('btnAddReq').addEventListener('click', addRequest);
+document.getElementById('btnGenerate').addEventListener('click', generateTokens);
+document.getElementById('btnFinish').addEventListener('click', finishRequest);
+document.getElementById('btnReset').addEventListener('click', resetSim);
+
+// ── Stage 4: Waste bars animation ──
+function animateWasteBars() {
+  setTimeout(() => {
+    document.getElementById('wUsed').style.width = '38%';
+    document.getElementById('wReserved').style.width = '24%';
+    document.getElementById('wFrag').style.width = '38%';
+    document.getElementById('pUsed').style.width = '96%';
+    document.getElementById('pWaste').style.width = '4%';
+  }, 500);
+}
+
+// ── Init ──
+function init() {
+  buildContiguousGrid();
+  buildPagedGrid();
+  renderSim();
+  animateWasteBars();
+}
+
+init();
+</script>
+</body>
+</html>
