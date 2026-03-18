@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Causal Self-Attention</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root {
+  --bg-page: #f8f7f4;
+  --bg-primary: #ffffff;
+  --bg-secondary: #F1EFE8;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-tertiary: #888780;
+  --border-light: #e5e4df;
+  --border-mid: #b4b2a9;
+  --purple-light-r: 238; --purple-light-g: 237; --purple-light-b: 254;
+  --purple-dark-r: 83; --purple-dark-g: 74; --purple-dark-b: 183;
+  --purple-text-hi: #ffffff;
+  --purple-text-lo: #3C3489;
+  --purple-600: #534AB7;
+  --red-50: #FCEBEB; --red-800: #791F1F;
+  --mask-bg: #F1EFE8;
+  --mask-text: #b4b2a9;
+  --line-rgb: 83,74,183;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg-page); color: var(--text-primary);
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  padding: 2rem 1rem;
+}
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+.sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; }
+.card-wrap {
+  background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: 12px;
+  padding: 1.5rem; max-width: 760px; width: 100%;
+}
+.card-wrap .katex { font-size: 1.15em; }
+.tabs { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; }
+.tab {
+  padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; border: 1.5px solid var(--border-light);
+  background: var(--bg-secondary); color: var(--text-primary); user-select: none;
+}
+.tab:hover:not(.active) { border-color: var(--border-mid); }
+.tab.active { background: var(--purple-600); color: #fff; border-color: var(--purple-600); }
+.section-label { font-size: 14px; font-weight: 500; color: var(--text-tertiary); text-align: center; margin: 14px 0 6px; }
+.section-label .katex { font-size: 1.05em; }
+.section-math { text-align: center; margin-top: 3px; font-size: 13px; color: var(--text-tertiary); }
+.comparison { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+.matrix-panel { display: flex; flex-direction: column; align-items: center; }
+.panel-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; text-align: center; }
+.mini-matrix { display: flex; align-items: flex-start; }
+.mini-row-labels { display: flex; flex-direction: column; gap: 1px; padding-right: 4px; padding-top: 28px; }
+.mini-row-label { height: 40px; display: flex; align-items: center; justify-content: flex-end; font-size: 11px; color: var(--text-secondary); }
+.mini-row-label.active-row { color: var(--purple-600); font-weight: 600; }
+.mini-grid-area { display: flex; flex-direction: column; align-items: center; }
+.mini-col-labels { display: flex; gap: 1px; margin-bottom: 2px; }
+.mini-col-label { width: 40px; text-align: center; font-size: 11px; color: var(--text-secondary); padding: 4px 0; }
+.mini-grid { display: grid; grid-template-columns: repeat(6, 40px); gap: 1px; }
+.mini-cell {
+  width: 40px; height: 40px; border-radius: 4px; display: flex; align-items: center;
+  justify-content: center; font-size: 10px; font-weight: 600; transition: all 0.3s;
+}
+.mini-cell.masked {
+  background: var(--mask-bg) !important; color: var(--mask-text) !important;
+  position: relative;
+}
+.mini-cell.masked::after {
+  content: '';
+  position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+  background: repeating-linear-gradient(
+    45deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px
+  );
+  border-radius: 2px;
+}
+.token-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; margin: 8px 0; }
+.tok {
+  width: 90px; padding: 8px 0; text-align: center; border-radius: 8px;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  border: 1.5px solid var(--border-light);
+  background: var(--bg-secondary); color: var(--text-primary); user-select: none;
+}
+.tok:hover:not(.active) { border-color: var(--border-mid); }
+.tok.active { background: var(--purple-600); color: #fff; border-color: var(--purple-600); }
+.tok.future { opacity: 0.35; }
+.canvas-wrap { width: 100%; height: 120px; }
+.canvas-wrap canvas { width: 100%; height: 100%; }
+.note-box {
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: 8px; padding: 14px 18px; margin: 14px auto 0; max-width: 580px;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+}
+.note-box .katex { font-size: 1.0em; }
+.generation-demo { display: flex; justify-content: center; gap: 4px; margin: 10px 0; flex-wrap: wrap; }
+.gen-tok {
+  padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  transition: all 0.3s;
+}
+.gen-past { background: var(--bg-secondary); color: var(--text-primary); }
+.gen-current { background: var(--purple-600); color: #fff; }
+.gen-future { background: var(--mask-bg); color: var(--mask-text); border: 1px dashed var(--border-mid); }
+.legend-row { display: flex; justify-content: center; gap: 18px; margin-top: 16px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+.highlight-info { text-align: center; font-size: 13px; color: var(--text-secondary); margin-top: 8px; min-height: 20px; }
+</style>
+</head>
+<body>
+<h1>Causal self-attention</h1>
+<p class="sub">Perché GPT non può "vedere" i token futuri durante la generazione</p>
+<div class="card-wrap">
+
+  <div class="tabs">
+    <div class="tab active" id="tab-full" onclick="setMode('full')">Full attention</div>
+    <div class="tab" id="tab-causal" onclick="setMode('causal')">Causal attention (GPT)</div>
+  </div>
+
+  <div class="section-label">Seleziona il token che sta generando</div>
+  <div class="token-row" id="tokens"></div>
+
+  <div class="section-label" id="gen-label"></div>
+  <div class="generation-demo" id="gen-demo"></div>
+
+  <div class="comparison" id="comparison"></div>
+
+  <div class="section-label">Connessioni di attenzione per il token selezionato</div>
+  <div class="canvas-wrap"><canvas id="cv"></canvas></div>
+  <div class="highlight-info" id="highlight-info"></div>
+
+  <div class="note-box" id="note-box"></div>
+
+  <div class="legend-row">
+    <div class="legend-item"><div class="legend-dot" style="background:#EEEDFE;border:1px solid #534AB7"></div>Visibile</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--mask-bg);border:1px dashed var(--border-mid)"></div>Mascherato (futuro)</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const K = katex;
+const ro = { throwOnError: false };
+function tex(t) { return K.renderToString(t, ro); }
+
+const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
+
+const fullWeights = [
+  [0.10, 0.35, 0.05, 0.30, 0.05, 0.15],
+  [0.15, 0.12, 0.05, 0.18, 0.10, 0.40],
+  [0.08, 0.10, 0.07, 0.55, 0.10, 0.10],
+  [0.05, 0.40, 0.15, 0.10, 0.10, 0.20],
+  [0.05, 0.10, 0.05, 0.15, 0.10, 0.55],
+  [0.04, 0.20, 0.04, 0.12, 0.45, 0.15]
+];
+
+function causalWeights(full) {
+  return full.map((row, ri) => {
+    const visible = row.slice(0, ri + 1);
+    const sum = visible.reduce((a, b) => a + b, 0);
+    const normalized = visible.map(v => v / sum);
+    const result = [];
+    for (let ci = 0; ci < row.length; ci++) {
+      result.push(ci <= ri ? normalized[ci] : 0);
+    }
+    return result;
+  });
+}
+
+const causal = causalWeights(fullWeights);
+let mode = 'full';
+let activeToken = 3;
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('tab-full').className = 'tab' + (m === 'full' ? ' active' : '');
+  document.getElementById('tab-causal').className = 'tab' + (m === 'causal' ? ' active' : '');
+  render();
+}
+
+function interpolateColor(norm) {
+  const r = Math.round(238 + norm * (83 - 238));
+  const g = Math.round(237 + norm * (74 - 237));
+  const b = Math.round(254 + norm * (183 - 254));
+  return `rgb(${r},${g},${b})`;
+}
+
+function textColor(norm) {
+  return norm > 0.4 ? '#ffffff' : '#3C3489';
+}
+
+function render() {
+  const isCausal = mode === 'causal';
+  const w = isCausal ? causal : fullWeights;
+
+  const toksEl = document.getElementById('tokens');
+  toksEl.innerHTML = '';
+  tokens.forEach((t, i) => {
+    const d = document.createElement('div');
+    d.className = 'tok' + (i === activeToken ? ' active' : '') + (isCausal && i > activeToken ? ' future' : '');
+    d.textContent = t;
+    d.onclick = () => { activeToken = i; render(); };
+    toksEl.appendChild(d);
+  });
+
+  const genLabel = document.getElementById('gen-label');
+  if (isCausal) {
+    genLabel.innerHTML = 'Generazione sequenziale: il modello sta predicendo il token dopo "' + tokens[activeToken] + '"';
+  } else {
+    genLabel.innerHTML = 'Full attention: ogni token vede tutta la sequenza';
+  }
+
+  const genDemo = document.getElementById('gen-demo');
+  genDemo.innerHTML = '';
+  if (isCausal) {
+    tokens.forEach((t, i) => {
+      const d = document.createElement('div');
+      d.className = 'gen-tok';
+      if (i < activeToken) d.className += ' gen-past';
+      else if (i === activeToken) d.className += ' gen-current';
+      else d.className += ' gen-future';
+      d.textContent = i > activeToken ? '???' : t;
+      genDemo.appendChild(d);
+    });
+  }
+
+  const comp = document.getElementById('comparison');
+  comp.innerHTML = '';
+
+  const panel = document.createElement('div');
+  panel.className = 'matrix-panel';
+
+  const title = document.createElement('div');
+  title.className = 'panel-title';
+  title.textContent = isCausal ? 'Attention weight matrix (con maschera causale)' : 'Attention weight matrix (completa)';
+  panel.appendChild(title);
+
+  const mm = document.createElement('div');
+  mm.className = 'mini-matrix';
+
+  let rlHtml = '<div class="mini-row-labels">';
+  tokens.forEach((t, i) => {
+    rlHtml += '<div class="mini-row-label' + (i === activeToken ? ' active-row' : '') + '">' + t + '</div>';
+  });
+  rlHtml += '</div>';
+
+  let gaHtml = '<div class="mini-grid-area"><div class="mini-col-labels">';
+  tokens.forEach(t => { gaHtml += '<div class="mini-col-label">' + t + '</div>'; });
+  gaHtml += '</div><div class="mini-grid">';
+
+  const maxW = Math.max(...w.flat().filter(v => v > 0));
+  tokens.forEach((_, ri) => {
+    tokens.forEach((_, ci) => {
+      const v = w[ri][ci];
+      const isMasked = isCausal && ci > ri;
+      if (isMasked) {
+        gaHtml += '<div class="mini-cell masked">&mdash;</div>';
+      } else {
+        const norm = maxW > 0 ? v / maxW : 0;
+        const dimmed = ri !== activeToken;
+        const intensity = dimmed ? norm * 0.25 : norm;
+        const bg = interpolateColor(intensity);
+        const fg = dimmed ? '#b4b2a9' : textColor(norm);
+        const op = dimmed ? 0.6 : 1;
+        gaHtml += '<div class="mini-cell" style="background:' + bg + ';color:' + fg + ';opacity:' + op + '">'
+          + (v * 100).toFixed(0) + '%</div>';
+      }
+    });
+  });
+
+  gaHtml += '</div></div>';
+  mm.innerHTML = rlHtml + gaHtml;
+  panel.appendChild(mm);
+  comp.appendChild(panel);
+
+  drawLines(w);
+
+  const nb = document.getElementById('note-box');
+  if (isCausal) {
+    nb.innerHTML = '<b>Causal self-attention (GPT)</b><br>'
+      + 'Durante la generazione, il modello predice un token alla volta, da sinistra a destra. '
+      + 'Quando genera il token in posizione ' + tex('t') + ', può vedere solo i token precedenti '
+      + tex('x_1, x_2, \\ldots, x_t') + ' — mai quelli futuri.<br>'
+      + 'Tecnicamente, si applica una <b>maschera triangolare</b> alla matrice dei pesi: '
+      + tex('\\alpha_{ij} = 0 \\;\\; \\forall \\; j > i')
+      + '. I pesi rimanenti vengono rinormalizzati con softmax perché sommino a 1.<br>'
+      + 'Le celle tratteggiate nella matrice sono i pesi mascherati — il modello non può accedervi.';
+  } else {
+    nb.innerHTML = '<b>Full self-attention (BERT, encoder)</b><br>'
+      + 'Ogni token può vedere <b>tutti</b> gli altri token, sia precedenti sia successivi. '
+      + 'Non c\'è maschera: la matrice dei pesi è completa.<br>'
+      + 'Questo è il meccanismo usato negli <b>encoder</b> (es. BERT) dove l\'intera sequenza è disponibile. '
+      + 'Non è adatto per la generazione sequenziale, perché il modello "vedrebbe" la risposta prima di generarla.';
+  }
+}
+
+function drawLines(w) {
+  const cv = document.getElementById('cv');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = cv.getBoundingClientRect();
+  cv.width = rect.width * dpr;
+  cv.height = rect.height * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+
+  const n = tokens.length;
+  const gap = 7, tokW = 90;
+  const totalW = n * tokW + (n - 1) * gap;
+  const startX = (rect.width - totalW) / 2;
+
+  const row = w[activeToken];
+  const maxA = Math.max(...row);
+  const qX = startX + activeToken * (tokW + gap) + tokW / 2;
+  const isCausal = mode === 'causal';
+
+  tokens.forEach((t, i) => {
+    const kX = startX + i * (tokW + gap) + tokW / 2;
+    const v = row[i];
+
+    if (isCausal && i > activeToken) {
+      ctx.beginPath();
+      ctx.moveTo(qX, 10);
+      ctx.bezierCurveTo(qX, 60, kX, 60, kX, 110);
+      ctx.strokeStyle = 'rgba(180,178,169,0.25)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#b4b2a9';
+      ctx.font = '600 11px DM Sans, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('X', kX, 114);
+    } else if (v > 0) {
+      const ratio = maxA > 0 ? v / maxA : 0;
+      const lw = 0.8 + ratio * 4.5;
+      const alpha = 0.15 + ratio * 0.85;
+
+      ctx.beginPath();
+      ctx.moveTo(qX, 10);
+      ctx.bezierCurveTo(qX, 60, kX, 60, kX, 110);
+      ctx.strokeStyle = 'rgba(83,74,183,' + alpha + ')';
+      ctx.lineWidth = lw;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+  });
+}
+
+render();
+</script>
+</body>
+</html>
