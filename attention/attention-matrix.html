@@ -226,6 +226,17 @@
     .highlight-info .katex {
       font-size: 1.0em;
     }
+
+    .params-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 12px;
+    }
+
+    .params-note .katex {
+      font-size: 0.95em;
+    }
   </style>
 </head>
 
@@ -251,6 +262,8 @@
       <span class="legend-label">100%</span>
     </div>
 
+    <div class="params-note" id="params-note"></div>
+
     <div class="note-box" id="note-box"></div>
   </div>
 
@@ -261,14 +274,60 @@
     function tex(t) { return K.renderToString(t, ro); }
 
     const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
-    const weights = [
-      [0.10, 0.35, 0.05, 0.30, 0.05, 0.15],
-      [0.15, 0.12, 0.05, 0.18, 0.10, 0.40],
-      [0.08, 0.10, 0.07, 0.55, 0.10, 0.10],
-      [0.05, 0.40, 0.15, 0.10, 0.10, 0.20],
-      [0.05, 0.10, 0.05, 0.15, 0.10, 0.55],
-      [0.04, 0.20, 0.04, 0.12, 0.45, 0.15]
+
+    /* ── Dati coerenti con l'infografica QKV ── */
+
+    const D_MODEL = 4;
+    const D_K = 3;
+
+    const embeddings = [
+      [ 0.21, -0.87,  0.53,  0.12],   // Il
+      [ 1.14,  0.32, -0.65,  0.89],   // gatto
+      [-0.43,  0.71,  0.18, -0.56],   // si
+      [ 0.67, -0.24,  1.03, -0.31],   // sedette
+      [-0.15,  0.92, -0.48,  0.64],   // sul
+      [ 0.83,  0.45,  0.76, -0.92],   // tappeto
     ];
+
+    const W_Q = [
+      [ 0.3, -0.1,  0.5,  0.2],
+      [-0.4,  0.7,  0.1, -0.3],
+      [ 0.2,  0.3, -0.6,  0.8]
+    ];
+    const W_K = [
+      [ 0.6,  0.2, -0.3,  0.1],
+      [-0.1,  0.5,  0.4, -0.2],
+      [ 0.3, -0.4,  0.7,  0.5]
+    ];
+
+    // ── Algebra lineare ──
+
+    function matVec(mat, vec) {
+      return mat.map(row => row.reduce((s, w, j) => s + w * vec[j], 0));
+    }
+
+    function dot(a, b) {
+      return a.reduce((s, v, i) => s + v * b[i], 0);
+    }
+
+    function softmax(arr) {
+      const max = Math.max(...arr);
+      const exps = arr.map(v => Math.exp(v - max));
+      const sum = exps.reduce((a, b) => a + b, 0);
+      return exps.map(e => e / sum);
+    }
+
+    // Calcola Q e K per ogni token
+    const QS = embeddings.map(x => matVec(W_Q, x));
+    const KS = embeddings.map(x => matVec(W_K, x));
+
+    // Calcola la matrice completa dei pesi di attenzione
+    const sqrtDk = Math.sqrt(D_K);
+    const weights = QS.map(q => {
+      const rawScores = KS.map(k => dot(q, k));
+      const scaledScores = rawScores.map(s => s / sqrtDk);
+      return softmax(scaledScores);
+    });
 
     let activeRow = -1;
 
@@ -327,16 +386,16 @@
           const dimmed = activeRow >= 0 && activeRow !== ri;
           const intensity = dimmed ? norm * 0.2 : norm;
           const rgb = interpolate(colors.light, colors.dark, intensity);
-          d.style.background = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+          d.style.background = 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
           d.style.color = dimmed ? colors.dimmed : (norm > 0.4 ? colors.textHi : colors.textLo);
           d.style.opacity = dimmed ? 0.5 : 1;
-          d.innerHTML = '<span class="pct">' + (w * 100).toFixed(0) + '%</span>';
+          d.innerHTML = '<span class="pct">' + (w * 100).toFixed(1) + '%</span>';
 
           d.onmouseenter = () => {
             document.getElementById('highlight-info').innerHTML =
               tex('\\alpha_{\\text{' + tokens[ri] + '} \\rightarrow \\text{' + tokens[ci] + '}}')
-              + ' = ' + (w * 100).toFixed(1) + '% \u2014 "' + tokens[ri] + '" presta il '
-              + (w * 100).toFixed(0) + '% di attenzione a "' + tokens[ci] + '"';
+              + ' = ' + (w * 100).toFixed(1) + '% — "' + tokens[ri] + '" presta il '
+              + (w * 100).toFixed(1) + '% di attenzione a "' + tokens[ci] + '"';
           };
           d.onmouseleave = () => {
             document.getElementById('highlight-info').innerHTML = '';
@@ -346,27 +405,38 @@
         });
       });
 
+      // Legend gradient
       const lc = document.getElementById('legend-canvas');
       const ctx = lc.getContext('2d');
       for (let x = 0; x < 180; x++) {
         const rgb = interpolate(colors.light, colors.dark, x / 179);
-        ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+        ctx.fillStyle = 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
         ctx.fillRect(x, 0, 1, 14);
       }
 
+      // Params note
+      document.getElementById('params-note').innerHTML =
+        'Calcolata con ' + tex('d_{\\text{model}} = ' + D_MODEL)
+        + ', ' + tex('d_k = ' + D_K)
+        + ' — stessi embedding e matrici ' + tex('W_Q, W_K')
+        + ' dell\'infografica QKV';
+
+      // Note box
       const nb = document.getElementById('note-box');
       nb.innerHTML = '<b>Come leggere la matrice</b><br>'
-        + 'Ogni <b>riga</b> corrisponde a un token <b>query</b> \u2014 il token che "guarda" gli altri. '
-        + 'Ogni <b>colonna</b> corrisponde a un token <b>key</b> \u2014 il token che viene guardato.<br>'
+        + 'Ogni <b>riga</b> corrisponde a un token <b>query</b> — il token che "guarda" gli altri. '
+        + 'Ogni <b>colonna</b> corrisponde a un token <b>key</b> — il token che viene guardato.<br>'
         + 'La cella (riga ' + tex('i') + ', colonna ' + tex('j') + ') contiene il peso '
         + tex('\\alpha_{ij}') + ': quanta attenzione il token ' + tex('i')
         + ' presta al token ' + tex('j') + '. '
         + 'Ogni riga somma a 100% (distribuzione softmax).<br>'
-        + 'Colore pi\u00f9 intenso = attenzione maggiore.';
+        + 'Colore più intenso = attenzione maggiore. '
+        + 'La distribuzione è relativamente piatta perché ' + tex('d_k = 3')
+        + ' è piccolo — con dimensioni reali (' + tex('d_k = 64')
+        + ') i picchi sarebbero molto più marcati.';
     }
 
     render();
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
   </script>
 </body>
 
