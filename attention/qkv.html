@@ -22,18 +22,16 @@
       --purple-800: #3C3489;
       --purple-900: #26215C;
       --teal-50: #E1F5EE;
+      --teal-600: #0F6E56;
       --teal-800: #085041;
       --coral-50: #FAECE7;
+      --coral-600: #993C1D;
       --coral-800: #712B13;
       --line-rgb: 83, 74, 183;
       --alpha-text: #3C3489;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
@@ -46,297 +44,199 @@
       padding: 2rem 1rem;
     }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 4px;
-      text-align: center;
-    }
-
-    .sub {
-      font-size: 14px;
-      color: var(--text-secondary);
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+    .sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; }
 
     .card-wrap {
       background: var(--bg-primary);
       border: 1px solid var(--border-light);
       border-radius: 12px;
       padding: 1.5rem;
-      max-width: 720px;
+      max-width: 780px;
       width: 100%;
     }
+    .card-wrap .katex { font-size: 1.15em; }
 
-    .card-wrap .katex {
-      font-size: 1.15em;
-    }
+    .hint { font-size: 13px; color: var(--text-tertiary); text-align: center; margin-bottom: 12px; }
 
-    .hint {
-      font-size: 13px;
-      color: var(--text-tertiary);
-      text-align: center;
-      margin-bottom: 12px;
-    }
+    .stage { margin: 18px 0 6px; }
+    .stage-label { font-size: 14px; font-weight: 500; color: var(--text-tertiary); letter-spacing: 0.3px; text-align: center; }
+    .stage-label .katex { font-size: 1.05em; }
+    .stage-math { text-align: center; margin-top: 4px; }
 
-    .stage {
-      margin: 18px 0 6px;
-    }
-
-    .stage-label {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-tertiary);
-      letter-spacing: 0.3px;
-      text-align: center;
-    }
-
-    .stage-label .katex {
-      font-size: 1.05em;
-    }
-
-    .stage-math {
-      text-align: center;
-      margin-top: 4px;
-    }
-
-    .tok-row {
-      display: flex;
-      justify-content: center;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
+    .tok-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
 
     .tok {
+      width: 90px; padding: 8px 0; text-align: center; border-radius: 8px;
+      font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      border: 1.5px solid var(--border-light); background: var(--bg-secondary);
+      color: var(--text-primary); user-select: none;
+    }
+    .tok:hover:not(.active) { border-color: var(--border-mid); }
+    .tok.active { background: var(--purple-600); color: #fff; border-color: var(--purple-600); }
+
+    /* --- Embedding vectors (vertical) --- */
+    .emb-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
+
+    .emb-col {
       width: 90px;
-      padding: 8px 0;
-      text-align: center;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 1.5px solid var(--border-light);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      user-select: none;
-    }
-
-    .tok:hover:not(.active) {
-      border-color: var(--border-mid);
-    }
-
-    .tok.active {
-      background: var(--purple-600);
-      color: #fff;
-      border-color: var(--purple-600);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .tok.active {
-        color: var(--purple-900);
-      }
-    }
-
-    .emb-row {
-      display: flex;
-      justify-content: center;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
-
-    .emb-cell {
-      width: 90px;
-      padding: 7px 0;
-      text-align: center;
-      border-radius: 6px;
-      background: var(--bg-secondary);
-      color: var(--text-secondary);
-      border: 0.5px solid var(--border-light);
-    }
-
-    .emb-cell.active-emb {
-      border-color: var(--purple-600);
-      background: var(--purple-50);
-      color: var(--purple-800);
-    }
-
-    .matrix-grid {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin: 10px 0;
-      flex-wrap: wrap;
-    }
-
-    .matrix-card {
-      border-radius: 8px;
-      padding: 14px 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-      min-width: 175px;
+      gap: 2px;
     }
-
-    .matrix-card .m-dim {
-      opacity: 0.8;
-    }
-
-    .wq {
-      background: var(--purple-50);
-      color: var(--purple-800);
-    }
-
-    .wk {
-      background: var(--teal-50);
-      color: var(--teal-800);
-    }
-
-    .wv {
-      background: var(--coral-50);
-      color: var(--coral-800);
-    }
-
-    .ref-block {
+    .emb-val {
+      width: 100%;
+      padding: 3px 0;
       text-align: center;
-      margin: 10px 0 0;
+      border-radius: 4px;
       font-size: 13px;
-      color: var(--text-tertiary);
-    }
-
-    .proj-row {
-      display: flex;
-      justify-content: center;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
-
-    .proj-cell {
-      width: 90px;
-      padding: 7px 0;
-      text-align: center;
-      border-radius: 6px;
       font-weight: 500;
-    }
-
-    .q-cell {
-      background: var(--purple-50);
-      color: var(--purple-800);
-    }
-
-    .k-cell {
-      background: var(--teal-50);
-      color: var(--teal-800);
-    }
-
-    .v-cell {
-      background: var(--coral-50);
-      color: var(--coral-800);
-    }
-
-    .canvas-wrap {
-      width: 100%;
-      height: 115px;
-    }
-
-    .canvas-wrap canvas {
-      width: 100%;
-      height: 100%;
-    }
-
-    .score-row,
-    .alpha-row {
-      display: flex;
-      justify-content: center;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
-
-    .score-cell,
-    .alpha-cell {
-      width: 90px;
-      padding: 7px 0;
-      text-align: center;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.25s;
-    }
-
-    .score-cell {
+      font-variant-numeric: tabular-nums;
       background: var(--bg-secondary);
       color: var(--text-secondary);
-    }
-
-    .formula-block {
-      background: var(--bg-secondary);
       border: 0.5px solid var(--border-light);
+      transition: all 0.2s;
+    }
+    .emb-col.active-emb .emb-val {
+      border-color: var(--purple-600);
+      background: var(--purple-50);
+      color: var(--purple-800);
+    }
+    .emb-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    .emb-col.active-emb .emb-label {
+      color: var(--purple-800);
+    }
+
+    /* --- Matrix section with visible values --- */
+    .matrices-section {
+      display: flex;
+      gap: 12px;
+      margin: 10px 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .matrix-card {
       border-radius: 8px;
-      padding: 16px 20px;
-      margin: 8px auto;
-      max-width: 520px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 160px;
+      flex: 1;
+      max-width: 220px;
+    }
+    .matrix-card .m-title { font-weight: 600; font-size: 14px; }
+    .matrix-card .m-dim { opacity: 0.8; font-size: 12px; }
+    .matrix-card .katex { font-size: 1.0em; }
+    .wq { background: var(--purple-50); color: var(--purple-800); }
+    .wk { background: var(--teal-50); color: var(--teal-800); }
+    .wv { background: var(--coral-50); color: var(--coral-800); }
+
+    .m-grid {
+      display: grid;
+      gap: 2px;
+      width: 100%;
+    }
+    .m-grid-cell {
+      padding: 3px 2px;
       text-align: center;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
     }
+    .wq .m-grid-cell { background: rgba(83,74,183,0.1); }
+    .wk .m-grid-cell { background: rgba(15,110,86,0.1); }
+    .wv .m-grid-cell { background: rgba(153,60,29,0.1); }
 
-    .formula-block .katex {
-      font-size: 1.45em;
+    .ref-block { text-align: center; margin: 10px 0 0; font-size: 13px; color: var(--text-tertiary); }
+
+    .proj-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
+    .proj-cell { width: 90px; padding: 7px 0; text-align: center; border-radius: 6px; font-weight: 500; }
+    .q-cell { background: var(--purple-50); color: var(--purple-800); }
+    .k-cell { background: var(--teal-50); color: var(--teal-800); }
+    .v-cell { background: var(--coral-50); color: var(--coral-800); }
+
+    .canvas-wrap { width: 100%; height: 115px; }
+    .canvas-wrap canvas { width: 100%; height: 100%; }
+
+    .score-row, .alpha-row { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
+    .score-cell, .alpha-cell {
+      width: 90px; padding: 7px 0; text-align: center; border-radius: 6px;
+      font-size: 14px; font-weight: 500; transition: all 0.25s;
     }
+    .score-cell { background: var(--bg-secondary); color: var(--text-secondary); }
 
-    .note {
+    /* --- Scaling arrow between raw and scaled scores --- */
+    .scaling-arrow {
+      text-align: center;
+      margin: 8px 0;
       font-size: 13px;
       color: var(--text-tertiary);
-      text-align: center;
-      margin: 6px 0 0;
-      line-height: 1.6;
-      max-width: 580px;
-      margin-left: auto;
-      margin-right: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .scaling-arrow .katex { font-size: 1.1em; }
+    .scaling-arrow svg { flex-shrink: 0; }
+
+    .formula-block {
+      background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+      border-radius: 8px; padding: 16px 20px; margin: 8px auto; max-width: 520px; text-align: center;
+    }
+    .formula-block .katex { font-size: 1.45em; }
+
+    .note {
+      font-size: 13px; color: var(--text-tertiary); text-align: center;
+      margin: 6px auto 0; line-height: 1.6; max-width: 580px;
     }
 
     .out-box {
-      background: var(--bg-secondary);
-      border: 0.5px solid var(--border-light);
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin: 10px auto 0;
-      max-width: 640px;
-      text-align: center;
+      background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+      border-radius: 8px; padding: 16px 20px; margin: 10px auto 0; max-width: 640px; text-align: center;
     }
+    .out-box .katex { font-size: 1.05em; }
+    .out-result { font-size: 13.5px; color: var(--text-secondary); text-align: center; margin-top: 8px; line-height: 1.6; }
 
-    .out-box .katex {
-      font-size: 1.05em;
-    }
+    .legend-row { display: flex; justify-content: center; gap: 18px; margin-top: 18px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+    .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 
-    .out-result {
-      font-size: 13.5px;
-      color: var(--text-secondary);
-      text-align: center;
-      margin-top: 8px;
-      line-height: 1.6;
-    }
-
-    .legend-row {
+    /* --- Projection detail --- */
+    .proj-detail {
       display: flex;
       justify-content: center;
-      gap: 18px;
-      margin-top: 18px;
+      gap: 14px;
+      margin: 10px 0 6px;
       flex-wrap: wrap;
-    }
-
-    .legend-item {
-      display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--text-secondary);
     }
-
-    .legend-dot {
-      width: 12px;
-      height: 12px;
+    .proj-detail-card {
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .proj-detail-card .katex { font-size: 1.0em; }
+    .proj-detail-vals {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+    .proj-detail-val {
+      padding: 2px 6px;
       border-radius: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
     }
   </style>
 </head>
@@ -361,8 +261,13 @@
     <div class="stage">
       <div class="stage-label">1. Proiezione lineare tramite tre matrici di pesi apprese</div>
     </div>
-    <div class="matrix-grid" id="matrix-cards"></div>
+    <div class="matrices-section" id="matrix-cards"></div>
     <div class="ref-block" id="ref-block"></div>
+
+    <div class="stage" style="margin-top:14px">
+      <div class="stage-label" id="proj-result-label"></div>
+    </div>
+    <div id="proj-detail"></div>
 
     <div class="proj-row" id="q-row" style="margin-top:12px"></div>
     <div style="height:5px"></div>
@@ -378,9 +283,16 @@
     <div class="canvas-wrap"><canvas id="cv"></canvas></div>
 
     <div class="stage">
-      <div class="stage-label">3. Score grezzi</div>
+      <div class="stage-label" id="raw-score-label"></div>
     </div>
-    <div class="score-row" id="scores"></div>
+    <div class="score-row" id="raw-scores"></div>
+
+    <div class="scaling-arrow" id="scaling-arrow"></div>
+
+    <div class="stage" style="margin-top:4px">
+      <div class="stage-label" id="scaled-score-label"></div>
+    </div>
+    <div class="score-row" id="scaled-scores"></div>
 
     <div class="formula-block" id="softmax-formula"></div>
     <div class="note" id="alpha-note"></div>
@@ -410,15 +322,58 @@
     function texInline(el, t) { K.render(t, el, ro); }
 
     const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
-    const rawScores = {
-      0: [1.8, 3.2, 0.4, 0.9, 0.5, 1.1],
-      1: [1.0, 1.6, 0.3, 2.8, 0.7, 3.5],
-      2: [0.5, 0.8, 1.2, 3.9, 0.6, 0.4],
-      3: [0.3, 3.6, 1.4, 1.2, 1.8, 1.5],
-      4: [0.4, 0.6, 0.3, 1.0, 1.5, 4.1],
-      5: [0.3, 1.8, 0.2, 1.2, 3.8, 1.4]
+    const D_MODEL = 4;
+    const D_K = 3;
+
+    // Embedding vectors (d_model = 4)
+    const embeddings = {
+      "Il":      [ 0.21, -0.87,  0.53,  0.12],
+      "gatto":   [ 1.14,  0.32, -0.65,  0.89],
+      "si":      [-0.43,  0.71,  0.18, -0.56],
+      "sedette": [ 0.67, -0.24,  1.03, -0.31],
+      "sul":     [-0.15,  0.92, -0.48,  0.64],
+      "tappeto": [ 0.83,  0.45,  0.76, -0.92]
     };
-    let active = 3;
+
+    // Weight matrices (d_k x d_model) = 3x4
+    const W_Q = [
+      [ 0.3, -0.1,  0.5,  0.2],
+      [-0.4,  0.7,  0.1, -0.3],
+      [ 0.2,  0.3, -0.6,  0.8]
+    ];
+    const W_K = [
+      [ 0.6,  0.2, -0.3,  0.1],
+      [-0.1,  0.5,  0.4, -0.2],
+      [ 0.3, -0.4,  0.7,  0.5]
+    ];
+    const W_V = [
+      [-0.2,  0.8,  0.1,  0.4],
+      [ 0.5, -0.3,  0.6, -0.1],
+      [ 0.1,  0.4, -0.5,  0.7]
+    ];
+
+    function matVec(mat, vec) {
+      return mat.map(row => row.reduce((s, w, j) => s + w * vec[j], 0));
+    }
+
+    function computeProjections() {
+      const qs = {}, ks = {}, vs = {};
+      tokens.forEach(t => {
+        const x = embeddings[t];
+        qs[t] = matVec(W_Q, x);
+        ks[t] = matVec(W_K, x);
+        vs[t] = matVec(W_V, x);
+      });
+      return { qs, ks, vs };
+    }
+
+    function dot(a, b) { return a.reduce((s, v, i) => s + v * b[i], 0); }
+
+    // Returns RAW dot products — no scaling
+    function computeRawScores(activeIdx, qs, ks) {
+      const qVec = qs[tokens[activeIdx]];
+      return tokens.map(t => dot(qVec, ks[t]));
+    }
 
     function softmax(arr) {
       const max = Math.max(...arr);
@@ -431,26 +386,66 @@
       return getComputedStyle(document.documentElement).getPropertyValue('--line-rgb').trim();
     }
 
-    function renderStatic() {
-      texInline(document.getElementById('emb-dim'), 'x_i \\in \\mathbb{R}^{d_{\\text{model}}}');
+    let active = 3;
+    const { qs, ks, vs } = computeProjections();
 
+    function renderStatic() {
+      texInline(document.getElementById('emb-dim'), 'x_i \\in \\mathbb{R}^{' + D_MODEL + '} \\quad (d_{\\text{model}} = ' + D_MODEL + ')');
+
+      // Matrix cards with numeric values
       const mc = document.getElementById('matrix-cards');
-      mc.innerHTML =
-        '<div class="matrix-card wq"><div id="mc-wq"></div><div class="m-dim" id="mc-wq-dim"></div></div>' +
-        '<div class="matrix-card wk"><div id="mc-wk"></div><div class="m-dim" id="mc-wk-dim"></div></div>' +
-        '<div class="matrix-card wv"><div id="mc-wv"></div><div class="m-dim" id="mc-wv-dim"></div></div>';
-      texInline(document.getElementById('mc-wq'), 'q_i = W_Q \\cdot x_i');
-      texInline(document.getElementById('mc-wq-dim'), 'W_Q \\in \\mathbb{R}^{d_k \\times d_{\\text{model}}}');
-      texInline(document.getElementById('mc-wk'), 'k_i = W_K \\cdot x_i');
-      texInline(document.getElementById('mc-wk-dim'), 'W_K \\in \\mathbb{R}^{d_k \\times d_{\\text{model}}}');
-      texInline(document.getElementById('mc-wv'), 'v_i = W_V \\cdot x_i');
-      texInline(document.getElementById('mc-wv-dim'), 'W_V \\in \\mathbb{R}^{d_v \\times d_{\\text{model}}}');
+      mc.innerHTML = '';
+
+      const matrices = [
+        { name: 'W_Q', data: W_Q, cls: 'wq', formula: 'q_i = W_Q \\cdot x_i' },
+        { name: 'W_K', data: W_K, cls: 'wk', formula: 'k_i = W_K \\cdot x_i' },
+        { name: 'W_V', data: W_V, cls: 'wv', formula: 'v_i = W_V \\cdot x_i' }
+      ];
+
+      matrices.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'matrix-card ' + m.cls;
+
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'm-title';
+        titleDiv.innerHTML = tex(m.formula);
+        card.appendChild(titleDiv);
+
+        const dimDiv = document.createElement('div');
+        dimDiv.className = 'm-dim';
+        dimDiv.innerHTML = tex(m.name + ' \\in \\mathbb{R}^{' + D_K + ' \\times ' + D_MODEL + '}');
+        card.appendChild(dimDiv);
+
+        const grid = document.createElement('div');
+        grid.className = 'm-grid';
+        grid.style.gridTemplateColumns = 'repeat(' + D_MODEL + ', 1fr)';
+        m.data.forEach(row => {
+          row.forEach(val => {
+            const cell = document.createElement('div');
+            cell.className = 'm-grid-cell';
+            cell.textContent = val.toFixed(1);
+            grid.appendChild(cell);
+          });
+        });
+        card.appendChild(grid);
+        mc.appendChild(card);
+      });
 
       const rb = document.getElementById('ref-block');
-      rb.innerHTML = 'Transformer originale: ' + tex('d_{\\text{model}} = 512') + ', &nbsp;' + tex('d_k = d_v = 64') + ', &nbsp;' + tex('h = 8') + ' heads';
+      rb.innerHTML = 'Nell\'esempio: ' + tex('d_{\\text{model}} = ' + D_MODEL) + ', &nbsp;' + tex('d_k = d_v = ' + D_K) + ' &nbsp;|&nbsp; Transformer originale: ' + tex('d_{\\text{model}} = 512') + ', ' + tex('d_k = d_v = 64') + ', ' + tex('h = 8') + ' heads';
 
-      document.getElementById('compat-label').innerHTML = '2. Compatibilit\u00e0: ' + tex('q_{\\text{query}} \\cdot k_i');
-      texInline(document.getElementById('compat-dim'), '\\mathbb{R}^{d_k} \\times \\mathbb{R}^{d_k} \\rightarrow \\mathbb{R} \\quad \\text{(uno scalare per token)}');
+      document.getElementById('compat-label').innerHTML = '2. Compatibilità: ' + tex('q_{\\text{query}} \\cdot k_i');
+      texInline(document.getElementById('compat-dim'), '\\mathbb{R}^{' + D_K + '} \\times \\mathbb{R}^{' + D_K + '} \\rightarrow \\mathbb{R} \\quad \\text{(uno scalare per token)}');
+
+      // Labels for raw and scaled scores
+      document.getElementById('raw-score-label').innerHTML = '3a. Score grezzi: ' + tex('q \\cdot k_i');
+
+      const sqrtDk = Math.sqrt(D_K);
+      document.getElementById('scaling-arrow').innerHTML =
+        '<svg width="16" height="24" viewBox="0 0 16 24"><path d="M8 2 L8 18 M3 14 L8 20 L13 14" stroke="var(--text-tertiary)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        tex('\\div \\sqrt{d_k} = \\sqrt{' + D_K + '} \\approx ' + sqrtDk.toFixed(2));
+
+      document.getElementById('scaled-score-label').innerHTML = '3b. Score scalati: ' + tex('\\dfrac{q \\cdot k_i}{\\sqrt{d_k}}');
 
       texBlock(document.getElementById('softmax-formula'), '\\alpha_i = \\text{softmax}\\!\\left(\\frac{q \\cdot k_i}{\\sqrt{d_k}}\\right)');
 
@@ -459,20 +454,21 @@
 
       document.getElementById('alpha-label').innerHTML = '4. Pesi di attenzione ' + tex('\\alpha_i');
 
-      texInline(document.getElementById('out-formula-general'), '\\text{out} = \\displaystyle\\sum_i \\alpha_i \\cdot v_i \\;\\in\\; \\mathbb{R}^{d_v}');
+      texInline(document.getElementById('out-formula-general'), '\\text{out} = \\displaystyle\\sum_i \\alpha_i \\cdot v_i \\;\\in\\; \\mathbb{R}^{' + D_K + '}');
 
       const lg = document.getElementById('legend');
       lg.innerHTML =
-        '<div class="legend-item"><div class="legend-dot q-cell"></div>' + tex('Q \\in \\mathbb{R}^{d_k}') + '</div>' +
-        '<div class="legend-item"><div class="legend-dot k-cell"></div>' + tex('K \\in \\mathbb{R}^{d_k}') + '</div>' +
-        '<div class="legend-item"><div class="legend-dot v-cell"></div>' + tex('V \\in \\mathbb{R}^{d_v}') + '</div>' +
-        '<div class="legend-item"><div class="legend-dot" style="background:var(--bg-secondary);border:0.5px solid var(--border-light)"></div>' + tex('x \\in \\mathbb{R}^{d_{\\text{model}}}') + '</div>';
+        '<div class="legend-item"><div class="legend-dot q-cell"></div>' + tex('Q \\in \\mathbb{R}^{' + D_K + '}') + '</div>' +
+        '<div class="legend-item"><div class="legend-dot k-cell"></div>' + tex('K \\in \\mathbb{R}^{' + D_K + '}') + '</div>' +
+        '<div class="legend-item"><div class="legend-dot v-cell"></div>' + tex('V \\in \\mathbb{R}^{' + D_K + '}') + '</div>' +
+        '<div class="legend-item"><div class="legend-dot" style="background:var(--bg-secondary);border:0.5px solid var(--border-light)"></div>' + tex('x \\in \\mathbb{R}^{' + D_MODEL + '}') + '</div>';
     }
 
     function render() {
       const rgb = getLineRGB();
       const alphaTextColor = getComputedStyle(document.documentElement).getPropertyValue('--alpha-text').trim();
 
+      // Token row
       const toksEl = document.getElementById('toks');
       toksEl.innerHTML = '';
       tokens.forEach((t, i) => {
@@ -483,15 +479,59 @@
         toksEl.appendChild(d);
       });
 
+      // Embedding vectors — vertical columns with actual values
       const embsEl = document.getElementById('embs');
       embsEl.innerHTML = '';
       tokens.forEach((t, i) => {
-        const d = document.createElement('div');
-        d.className = 'emb-cell' + (i === active ? ' active-emb' : '');
-        d.innerHTML = tex('x_{\\text{' + t + '}}');
-        embsEl.appendChild(d);
+        const col = document.createElement('div');
+        col.className = 'emb-col' + (i === active ? ' active-emb' : '');
+        embeddings[t].forEach(val => {
+          const cell = document.createElement('div');
+          cell.className = 'emb-val';
+          cell.textContent = val.toFixed(2);
+          col.appendChild(cell);
+        });
+        const label = document.createElement('div');
+        label.className = 'emb-label';
+        label.innerHTML = tex('x_{\\text{' + t + '}}');
+        col.appendChild(label);
+        embsEl.appendChild(col);
       });
 
+      // Projection result label
+      const projLabel = document.getElementById('proj-result-label');
+      projLabel.innerHTML = 'Risultato: vettori proiettati per "' + tokens[active] + '"';
+
+      // Projection detail for active token
+      const projDetail = document.getElementById('proj-detail');
+      projDetail.innerHTML = '';
+      projDetail.className = 'proj-detail';
+
+      const projections = [
+        { vec: qs[tokens[active]], cls: 'wq', prefix: 'q' },
+        { vec: ks[tokens[active]], cls: 'wk', prefix: 'k' },
+        { vec: vs[tokens[active]], cls: 'wv', prefix: 'v' }
+      ];
+
+      projections.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'proj-detail-card ' + p.cls;
+        const title = document.createElement('div');
+        title.innerHTML = tex(p.prefix + '_{\\text{' + tokens[active] + '}}') + ' = ';
+        card.appendChild(title);
+        const vals = document.createElement('div');
+        vals.className = 'proj-detail-vals';
+        p.vec.forEach(v => {
+          const sp = document.createElement('span');
+          sp.className = 'proj-detail-val';
+          sp.textContent = v.toFixed(2);
+          vals.appendChild(sp);
+        });
+        card.appendChild(vals);
+        projDetail.appendChild(card);
+      });
+
+      // Q / K / V rows
       const qRow = document.getElementById('q-row');
       const kRow = document.getElementById('k-row');
       const vRow = document.getElementById('v-row');
@@ -518,21 +558,40 @@
       const tn = tokens[active];
       noteEl.innerHTML = tex('q_{\\text{' + tn + '}} = W_Q \\cdot x_{\\text{' + tn + '}}') + ' &nbsp;|&nbsp; Ogni ' + tex('k_i') + ' e ' + tex('v_i') + ' si ottiene allo stesso modo';
 
-      const scores = rawScores[active];
-      const alphas = softmax(scores);
-      const maxScore = Math.max(...scores);
+      // --- Scores: raw → scaled → softmax ---
+      const rawScores = computeRawScores(active, qs, ks);
+      const sqrtDk = Math.sqrt(D_K);
+      const scaledScores = rawScores.map(s => s / sqrtDk);
+      const alphas = softmax(scaledScores);
+      const maxRaw = Math.max(...rawScores.map(Math.abs));
+      const maxScaled = Math.max(...scaledScores.map(Math.abs));
       const maxAlpha = Math.max(...alphas);
 
-      const scoresEl = document.getElementById('scores');
-      scoresEl.innerHTML = '';
-      scores.forEach((s) => {
+      // Raw scores row
+      const rawEl = document.getElementById('raw-scores');
+      rawEl.innerHTML = '';
+      rawScores.forEach(s => {
         const d = document.createElement('div');
         d.className = 'score-cell';
-        d.style.opacity = 0.4 + (s / maxScore) * 0.6;
-        d.textContent = s.toFixed(1);
-        scoresEl.appendChild(d);
+        const absRatio = Math.abs(s) / (maxRaw || 1);
+        d.style.opacity = 0.4 + absRatio * 0.6;
+        d.textContent = s.toFixed(2);
+        rawEl.appendChild(d);
       });
 
+      // Scaled scores row
+      const scaledEl = document.getElementById('scaled-scores');
+      scaledEl.innerHTML = '';
+      scaledScores.forEach(s => {
+        const d = document.createElement('div');
+        d.className = 'score-cell';
+        const absRatio = Math.abs(s) / (maxScaled || 1);
+        d.style.opacity = 0.4 + absRatio * 0.6;
+        d.textContent = s.toFixed(2);
+        scaledEl.appendChild(d);
+      });
+
+      // Alphas
       const alphasEl = document.getElementById('alphas');
       alphasEl.innerHTML = '';
       alphas.forEach((a, i) => {
@@ -547,6 +606,7 @@
         alphasEl.appendChild(d);
       });
 
+      // Output
       const outBox = document.getElementById('out-box');
       const half = Math.ceil(tokens.length / 2);
       const row1 = tokens.slice(0, half).map((t, i) => {
@@ -567,7 +627,7 @@
 
       const outResult = document.getElementById('out-result');
       const topIdx = alphas.indexOf(maxAlpha);
-      outResult.innerHTML = 'L\'output \u00e8 un vettore ' + tex('\\in \\mathbb{R}^{d_v}') + ' che mescola i value di tutti i token, pesati per rilevanza. \u201c' + tokens[active] + '\u201d prende il ' + (alphas[topIdx] * 100).toFixed(0) + '% del contenuto di \u201c' + tokens[topIdx] + '\u201d';
+      outResult.innerHTML = 'L\'output è un vettore ' + tex('\\in \\mathbb{R}^{' + D_K + '}') + ' che mescola i value di tutti i token, pesati per rilevanza. "' + tokens[active] + '" presta il ' + (alphas[topIdx] * 100).toFixed(0) + '% di attenzione a "' + tokens[topIdx] + '"';
 
       drawLines(alphas, rgb);
     }
