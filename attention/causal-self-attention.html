@@ -21,7 +21,6 @@
   --purple-text-hi: #ffffff;
   --purple-text-lo: #3C3489;
   --purple-600: #534AB7;
-  --red-50: #FCEBEB; --red-800: #791F1F;
   --mask-bg: #F1EFE8;
   --mask-text: #b4b2a9;
   --line-rgb: 83,74,183;
@@ -50,7 +49,6 @@ h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; 
 .tab.active { background: var(--purple-600); color: #fff; border-color: var(--purple-600); }
 .section-label { font-size: 14px; font-weight: 500; color: var(--text-tertiary); text-align: center; margin: 14px 0 6px; }
 .section-label .katex { font-size: 1.05em; }
-.section-math { text-align: center; margin-top: 3px; font-size: 13px; color: var(--text-tertiary); }
 .comparison { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
 .matrix-panel { display: flex; flex-direction: column; align-items: center; }
 .panel-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; text-align: center; }
@@ -147,30 +145,70 @@ const ro = { throwOnError: false };
 function tex(t) { return K.renderToString(t, ro); }
 
 const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
+const N = tokens.length;
+const D_MODEL = 4;
+const D_K = 3;
 
-const fullWeights = [
-  [0.10, 0.35, 0.05, 0.30, 0.05, 0.15],
-  [0.15, 0.12, 0.05, 0.18, 0.10, 0.40],
-  [0.08, 0.10, 0.07, 0.55, 0.10, 0.10],
-  [0.05, 0.40, 0.15, 0.10, 0.10, 0.20],
-  [0.05, 0.10, 0.05, 0.15, 0.10, 0.55],
-  [0.04, 0.20, 0.04, 0.12, 0.45, 0.15]
+/* ── Stessi dati di tutte le altre infografiche ── */
+
+const X = [
+  [ 0.21, -0.87,  0.53,  0.12],
+  [ 1.14,  0.32, -0.65,  0.89],
+  [-0.43,  0.71,  0.18, -0.56],
+  [ 0.67, -0.24,  1.03, -0.31],
+  [-0.15,  0.92, -0.48,  0.64],
+  [ 0.83,  0.45,  0.76, -0.92]
 ];
 
-function causalWeights(full) {
-  return full.map((row, ri) => {
-    const visible = row.slice(0, ri + 1);
-    const sum = visible.reduce((a, b) => a + b, 0);
-    const normalized = visible.map(v => v / sum);
-    const result = [];
-    for (let ci = 0; ci < row.length; ci++) {
-      result.push(ci <= ri ? normalized[ci] : 0);
-    }
-    return result;
+const W_Q = [
+  [ 0.3, -0.1,  0.5,  0.2],
+  [-0.4,  0.7,  0.1, -0.3],
+  [ 0.2,  0.3, -0.6,  0.8]
+];
+const W_K = [
+  [ 0.6,  0.2, -0.3,  0.1],
+  [-0.1,  0.5,  0.4, -0.2],
+  [ 0.3, -0.4,  0.7,  0.5]
+];
+
+/* ── Algebra lineare ── */
+
+function dot(a, b) { return a.reduce((s, v, i) => s + v * b[i], 0); }
+function matVec(M, v) { return M.map(row => row.reduce((s, w, j) => s + w * v[j], 0)); }
+
+function softmaxRow(arr) {
+  const max = Math.max(...arr);
+  const exps = arr.map(v => Math.exp(v - max));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  return exps.map(e => e / sum);
+}
+
+/* ── Calcolo pesi full attention ── */
+
+const QS = X.map(x => matVec(W_Q, x));
+const KS = X.map(x => matVec(W_K, x));
+const sqrtDk = Math.sqrt(D_K);
+
+const fullWeights = QS.map(q => {
+  const scores = KS.map(k => dot(q, k) / sqrtDk);
+  return softmaxRow(scores);
+});
+
+/* ── Calcolo pesi causal attention ── */
+// Maschera i token futuri PRIMA del softmax (= -inf), poi rinormalizza
+
+function computeCausalWeights() {
+  return QS.map((q, i) => {
+    const scores = KS.map((k, j) => {
+      if (j > i) return -Infinity;  // maschera causale
+      return dot(q, k) / sqrtDk;
+    });
+    return softmaxRow(scores);
   });
 }
 
-const causal = causalWeights(fullWeights);
+const causal = computeCausalWeights();
+
 let mode = 'full';
 let activeToken = 3;
 
@@ -185,7 +223,7 @@ function interpolateColor(norm) {
   const r = Math.round(238 + norm * (83 - 238));
   const g = Math.round(237 + norm * (74 - 237));
   const b = Math.round(254 + norm * (183 - 254));
-  return `rgb(${r},${g},${b})`;
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 
 function textColor(norm) {
@@ -284,10 +322,11 @@ function render() {
       + 'Durante la generazione, il modello predice un token alla volta, da sinistra a destra. '
       + 'Quando genera il token in posizione ' + tex('t') + ', può vedere solo i token precedenti '
       + tex('x_1, x_2, \\ldots, x_t') + ' — mai quelli futuri.<br>'
-      + 'Tecnicamente, si applica una <b>maschera triangolare</b> alla matrice dei pesi: '
-      + tex('\\alpha_{ij} = 0 \\;\\; \\forall \\; j > i')
-      + '. I pesi rimanenti vengono rinormalizzati con softmax perché sommino a 1.<br>'
-      + 'Le celle tratteggiate nella matrice sono i pesi mascherati — il modello non può accedervi.';
+      + 'Tecnicamente, si pone ' + tex('\\text{score}_{ij} = -\\infty') + ' per ogni '
+      + tex('j > i') + ' <b>prima</b> del softmax, cosicché '
+      + tex('e^{-\\infty} = 0') + ' e quei token non contribuiscono. '
+      + 'I pesi rimanenti sono automaticamente normalizzati dal softmax.<br>'
+      + 'Le celle tratteggiate nella matrice sono le posizioni mascherate — il modello non può accedervi.';
   } else {
     nb.innerHTML = '<b>Full self-attention (BERT, encoder)</b><br>'
       + 'Ogni token può vedere <b>tutti</b> gli altri token, sia precedenti sia successivi. '
@@ -353,6 +392,7 @@ function drawLines(w) {
 }
 
 render();
+window.addEventListener('resize', render);
 </script>
 </body>
 </html>
