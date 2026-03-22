@@ -17,33 +17,19 @@
       --text-tertiary: #888780;
       --border-light: #e5e4df;
       --border-mid: #b4b2a9;
-      --purple-light-r: 238;
-      --purple-light-g: 237;
-      --purple-light-b: 254;
-      --purple-dark-r: 83;
-      --purple-dark-g: 74;
-      --purple-dark-b: 183;
+      --purple-light-r: 238; --purple-light-g: 237; --purple-light-b: 254;
+      --purple-dark-r: 83; --purple-dark-g: 74; --purple-dark-b: 183;
       --purple-text-hi: #ffffff;
       --purple-text-lo: #3C3489;
-      --red-badge-bg: #FCEBEB;
-      --red-badge-text: #791F1F;
-      --amber-badge-bg: #FAEEDA;
-      --amber-badge-text: #633806;
-      --green-badge-bg: #E1F5EE;
-      --green-badge-text: #085041;
-      --tab-red: #A32D2D;
-      --tab-red-text: #fff;
-      --tab-amber: #BA7517;
-      --tab-amber-text: #fff;
-      --tab-green: #0F6E56;
-      --tab-green-text: #fff;
+      --red-badge-bg: #FCEBEB; --red-badge-text: #791F1F;
+      --amber-badge-bg: #FAEEDA; --amber-badge-text: #633806;
+      --green-badge-bg: #E1F5EE; --green-badge-text: #085041;
+      --tab-red: #A32D2D; --tab-red-text: #fff;
+      --tab-amber: #BA7517; --tab-amber-text: #fff;
+      --tab-green: #0F6E56; --tab-green-text: #fff;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
@@ -56,19 +42,8 @@
       padding: 2rem 1rem;
     }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 4px;
-      text-align: center;
-    }
-
-    .sub {
-      font-size: 14px;
-      color: var(--text-secondary);
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+    .sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; }
 
     .card-wrap {
       background: var(--bg-primary);
@@ -78,220 +53,57 @@
       max-width: 720px;
       width: 100%;
     }
+    .card-wrap .katex { font-size: 1.1em; }
 
-    .card-wrap .katex {
-      font-size: 1.1em;
-    }
-
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
+    .tabs { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 
     .tab {
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 1.5px solid var(--border-light);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      user-select: none;
+      padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; border: 1.5px solid var(--border-light);
+      background: var(--bg-secondary); color: var(--text-primary); user-select: none;
     }
+    .tab:hover:not([data-active]) { border-color: var(--border-mid); }
+    .tab[data-active="0"] { background: var(--tab-red); color: var(--tab-red-text); border-color: var(--tab-red); }
+    .tab[data-active="1"] { background: var(--tab-amber); color: var(--tab-amber-text); border-color: var(--tab-amber); }
+    .tab[data-active="2"] { background: var(--tab-green); color: var(--tab-green-text); border-color: var(--tab-green); }
 
-    .tab:hover:not([data-active]) {
-      border-color: var(--border-mid);
-    }
+    .scenario-header { text-align: center; margin-bottom: 6px; }
+    .scenario-header .title { font-size: 15px; font-weight: 600; }
 
-    .tab[data-active="0"] {
-      background: var(--tab-red);
-      color: var(--tab-red-text);
-      border-color: var(--tab-red);
-    }
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; }
+    .badge-red { background: var(--red-badge-bg); color: var(--red-badge-text); }
+    .badge-amber { background: var(--amber-badge-bg); color: var(--amber-badge-text); }
+    .badge-green { background: var(--green-badge-bg); color: var(--green-badge-text); }
 
-    .tab[data-active="1"] {
-      background: var(--tab-amber);
-      color: var(--tab-amber-text);
-      border-color: var(--tab-amber);
-    }
-
-    .tab[data-active="2"] {
-      background: var(--tab-green);
-      color: var(--tab-green-text);
-      border-color: var(--tab-green);
-    }
-
-    .scenario-header {
-      text-align: center;
-      margin-bottom: 6px;
-    }
-
-    .scenario-header .title {
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .badge {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-    }
-
-    .badge-red {
-      background: var(--red-badge-bg);
-      color: var(--red-badge-text);
-    }
-
-    .badge-amber {
-      background: var(--amber-badge-bg);
-      color: var(--amber-badge-text);
-    }
-
-    .badge-green {
-      background: var(--green-badge-bg);
-      color: var(--green-badge-text);
-    }
-
-    .matrix-wrap {
-      display: flex;
-      justify-content: center;
-      margin: 12px 0;
-    }
-
-    .mini-matrix {
-      display: flex;
-      align-items: flex-start;
-      gap: 0;
-    }
-
-    .mini-row-labels {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      padding-right: 4px;
-      padding-top: 28px;
-    }
-
-    .mini-row-label {
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      font-size: 11px;
-      color: var(--text-secondary);
-    }
-
-    .mini-grid-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .mini-col-labels {
-      display: flex;
-      gap: 1px;
-      margin-bottom: 2px;
-    }
-
-    .mini-col-label {
-      width: 36px;
-      text-align: center;
-      font-size: 11px;
-      color: var(--text-secondary);
-      padding: 4px 0;
-    }
-
-    .mini-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 36px);
-      gap: 1px;
-    }
-
+    .matrix-wrap { display: flex; justify-content: center; margin: 12px 0; }
+    .mini-matrix { display: flex; align-items: flex-start; gap: 0; }
+    .mini-row-labels { display: flex; flex-direction: column; gap: 1px; padding-right: 4px; padding-top: 28px; }
+    .mini-row-label { height: 36px; display: flex; align-items: center; justify-content: flex-end; font-size: 11px; color: var(--text-secondary); }
+    .mini-grid-area { display: flex; flex-direction: column; align-items: center; }
+    .mini-col-labels { display: flex; gap: 1px; margin-bottom: 2px; }
+    .mini-col-label { width: 36px; text-align: center; font-size: 11px; color: var(--text-secondary); padding: 4px 0; }
+    .mini-grid { display: grid; grid-template-columns: repeat(6, 36px); gap: 1px; }
     .mini-cell {
-      width: 36px;
-      height: 36px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 600;
-      transition: all 0.3s;
+      width: 36px; height: 36px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600; transition: all 0.3s;
     }
 
-    .problem-list {
-      max-width: 480px;
-      margin: 12px auto 0;
-    }
-
-    .problem-item {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      padding: 4px 0;
-      display: flex;
-      gap: 6px;
-    }
-
-    .problem-item .icon {
-      flex-shrink: 0;
-      font-size: 13px;
-      width: 18px;
-      text-align: center;
-    }
+    .problem-list { max-width: 520px; margin: 12px auto 0; }
+    .problem-item { font-size: 13px; color: var(--text-secondary); line-height: 1.6; padding: 4px 0; display: flex; gap: 6px; }
+    .problem-item .icon { flex-shrink: 0; font-size: 13px; width: 18px; text-align: center; }
 
     .sym-note {
-      background: var(--bg-secondary);
-      border: 0.5px solid var(--border-light);
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin: 12px auto 0;
-      max-width: 480px;
-      font-size: 12px;
-      color: var(--text-tertiary);
-      text-align: center;
-      line-height: 1.6;
+      background: var(--bg-secondary); border: 0.5px solid var(--border-light); border-radius: 8px;
+      padding: 10px 14px; margin: 12px auto 0; max-width: 520px;
+      font-size: 12px; color: var(--text-tertiary); text-align: center; line-height: 1.6;
     }
+    .sym-note .katex { font-size: 0.95em; }
 
-    .sym-note .katex {
-      font-size: 0.95em;
-    }
-
-    .arrow-pair {
-      display: flex;
-      justify-content: center;
-      gap: 24px;
-      margin: 10px 0;
-      flex-wrap: wrap;
-    }
-
-    .arrow-card {
-      background: var(--bg-secondary);
-      border-radius: 8px;
-      padding: 10px 14px;
-      text-align: center;
-      min-width: 140px;
-    }
-
-    .arrow-card .pair {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 2px;
-    }
-
-    .arrow-card .weight {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
+    .arrow-pair { display: flex; justify-content: center; gap: 24px; margin: 10px 0; flex-wrap: wrap; }
+    .arrow-card { background: var(--bg-secondary); border-radius: 8px; padding: 10px 14px; text-align: center; min-width: 140px; }
+    .arrow-card .pair { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
+    .arrow-card .weight { font-size: 12px; color: var(--text-secondary); }
   </style>
 </head>
 
@@ -311,38 +123,101 @@
     function texBlock(el, t) { K.render(t, el, { throwOnError: false, displayMode: true }); }
 
     const tokens = ["Il", "gatto", "si", "sedette", "sul", "tappeto"];
+    const N = tokens.length;
+    const D_MODEL = 4;
+    const D_K = 3;
 
-    const weightsNone = [
-      [0.18, 0.16, 0.17, 0.16, 0.17, 0.16],
-      [0.16, 0.18, 0.16, 0.17, 0.16, 0.17],
-      [0.17, 0.16, 0.18, 0.16, 0.17, 0.16],
-      [0.16, 0.17, 0.16, 0.18, 0.16, 0.17],
-      [0.17, 0.16, 0.17, 0.16, 0.18, 0.16],
-      [0.16, 0.17, 0.16, 0.17, 0.16, 0.18]
+    /* ── Stessi dati delle altre infografiche ── */
+
+    const X = [
+      [ 0.21, -0.87,  0.53,  0.12],
+      [ 1.14,  0.32, -0.65,  0.89],
+      [-0.43,  0.71,  0.18, -0.56],
+      [ 0.67, -0.24,  1.03, -0.31],
+      [-0.15,  0.92, -0.48,  0.64],
+      [ 0.83,  0.45,  0.76, -0.92]
     ];
 
-    const weightsShared = [
-      [0.22, 0.18, 0.08, 0.20, 0.12, 0.20],
-      [0.18, 0.20, 0.10, 0.22, 0.10, 0.20],
-      [0.08, 0.10, 0.24, 0.22, 0.18, 0.18],
-      [0.20, 0.22, 0.22, 0.12, 0.12, 0.12],
-      [0.12, 0.10, 0.18, 0.12, 0.20, 0.28],
-      [0.20, 0.20, 0.18, 0.12, 0.28, 0.02]
+    const W_Q = [
+      [ 0.3, -0.1,  0.5,  0.2],
+      [-0.4,  0.7,  0.1, -0.3],
+      [ 0.2,  0.3, -0.6,  0.8]
+    ];
+    const W_K = [
+      [ 0.6,  0.2, -0.3,  0.1],
+      [-0.1,  0.5,  0.4, -0.2],
+      [ 0.3, -0.4,  0.7,  0.5]
     ];
 
-    const weightsFull = [
-      [0.10, 0.35, 0.05, 0.30, 0.05, 0.15],
-      [0.15, 0.12, 0.05, 0.18, 0.10, 0.40],
-      [0.08, 0.10, 0.07, 0.55, 0.10, 0.10],
-      [0.05, 0.40, 0.15, 0.10, 0.10, 0.20],
-      [0.05, 0.10, 0.05, 0.15, 0.10, 0.55],
-      [0.04, 0.20, 0.04, 0.12, 0.45, 0.15]
-    ];
+    /* ── Algebra lineare ── */
+
+    function dot(a, b) { return a.reduce((s, v, i) => s + v * b[i], 0); }
+
+    function matVec(M, v) {
+      return M.map(row => row.reduce((s, w, j) => s + w * v[j], 0));
+    }
+
+    function softmaxRow(arr) {
+      const max = Math.max(...arr);
+      const exps = arr.map(v => Math.exp(v - max));
+      const sum = exps.reduce((a, b) => a + b, 0);
+      return exps.map(e => e / sum);
+    }
+
+    /* ── Calcolo dei tre scenari ── */
+
+    // Scenario 0: nessuna matrice — score = x_i · x_j / √d_model
+    function computeNoMatrix() {
+      const W = [];
+      for (let i = 0; i < N; i++) {
+        const scores = [];
+        for (let j = 0; j < N; j++) {
+          scores.push(dot(X[i], X[j]) / Math.sqrt(D_MODEL));
+        }
+        W.push(softmaxRow(scores));
+      }
+      return W;
+    }
+
+    // Scenario 1: W condivisa (W_Q = W_K = W_V = W_Q) — score = (Wx_i)·(Wx_j) / √d_k
+    // La matrice degli score è simmetrica: (Wx_i)·(Wx_j) = (Wx_j)·(Wx_i)
+    function computeSharedW() {
+      const P = X.map(x => matVec(W_Q, x));
+      const W = [];
+      for (let i = 0; i < N; i++) {
+        const scores = [];
+        for (let j = 0; j < N; j++) {
+          scores.push(dot(P[i], P[j]) / Math.sqrt(D_K));
+        }
+        W.push(softmaxRow(scores));
+      }
+      return W;
+    }
+
+    // Scenario 2: W_Q, W_K, W_V separate — score = (W_Q x_i)·(W_K x_j) / √d_k
+    // La matrice degli score NON è simmetrica
+    function computeSeparateW() {
+      const QS = X.map(x => matVec(W_Q, x));
+      const KS = X.map(x => matVec(W_K, x));
+      const W = [];
+      for (let i = 0; i < N; i++) {
+        const scores = [];
+        for (let j = 0; j < N; j++) {
+          scores.push(dot(QS[i], KS[j]) / Math.sqrt(D_K));
+        }
+        W.push(softmaxRow(scores));
+      }
+      return W;
+    }
+
+    const weightsNone = computeNoMatrix();
+    const weightsShared = computeSharedW();
+    const weightsFull = computeSeparateW();
 
     const scenarios = [
       { label: 'Nessuna matrice', weights: weightsNone, badge: 'badge-red', badgeText: 'Nessuna proiezione' },
-      { label: 'W condivisa', weights: weightsShared, badge: 'badge-amber', badgeText: 'Simmetrica' },
-      { label: 'W\u2080, W\u2096, W\u1D65 separate', weights: weightsFull, badge: 'badge-green', badgeText: 'Asimmetrica' }
+      { label: 'W condivisa', weights: weightsShared, badge: 'badge-amber', badgeText: 'Score simmetrici' },
+      { label: 'W\u2080, W\u2096, W\u1D65 separate', weights: weightsFull, badge: 'badge-green', badgeText: 'Score asimmetrici' }
     ];
 
     let activeTab = 0;
@@ -362,13 +237,16 @@
       const r = Math.round(c.lr + norm * (c.dr - c.lr));
       const g = Math.round(c.lg + norm * (c.dg - c.lg));
       const b = Math.round(c.lb + norm * (c.db - c.lb));
-      return `rgb(${r},${g},${b})`;
+      return 'rgb(' + r + ',' + g + ',' + b + ')';
     }
+
+    function pct(w, i, j) { return (w[i][j] * 100).toFixed(1); }
 
     function render() {
       const c = getColorStops();
       const sc = scenarios[activeTab];
 
+      // Tabs
       const tabs = document.getElementById('tabs');
       tabs.innerHTML = '';
       scenarios.forEach((s, i) => {
@@ -388,6 +266,7 @@
       html += '<div id="formula-block"></div>';
       html += '</div>';
 
+      // Matrix
       html += '<div class="matrix-wrap"><div class="mini-matrix">';
       html += '<div class="mini-row-labels">';
       tokens.forEach(t => { html += '<div class="mini-row-label">' + t + '</div>'; });
@@ -410,59 +289,66 @@
             + (v * 100).toFixed(0) + '%</div>';
         });
       });
-
       html += '</div></div></div></div>';
 
+      // Per-scenario content
       if (activeTab === 0) {
         html += '<div class="arrow-pair">';
-        html += '<div class="arrow-card"><div class="pair">sedette \u2192 gatto</div><div class="weight">16%</div></div>';
-        html += '<div class="arrow-card"><div class="pair">sedette \u2192 tappeto</div><div class="weight">17%</div></div>';
+        html += '<div class="arrow-card"><div class="pair">sedette \u2192 gatto</div><div class="weight">' + pct(w,3,1) + '%</div></div>';
+        html += '<div class="arrow-card"><div class="pair">gatto \u2192 sedette</div><div class="weight">' + pct(w,1,3) + '%</div></div>';
         html += '</div>';
         html += '<div class="problem-list">';
-        html += '<div class="problem-item"><span class="icon">\u2717</span><span>Pesi quasi uniformi \u2014 il modello non distingue token rilevanti da irrilevanti</span></div>';
-        html += '<div class="problem-item"><span class="icon">\u2717</span><span>Nessuna capacit\u00e0 di apprendere relazioni sintattiche o semantiche</span></div>';
-        html += '<div class="problem-item"><span class="icon">\u2717</span><span>Il dot product ' + tex('x_i \\cdot x_j') + ' misura solo similarit\u00e0 grezza tra embedding</span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2717</span><span>I pattern dipendono solo dalla norma e direzione degli embedding fissi, non sono apprendibili</span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2717</span><span>La diagonale domina: ogni token è massimamente simile a sé stesso (' + tex('x_i \\cdot x_i = \\|x_i\\|^2') + ')</span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2717</span><span>Score simmetrici (' + tex('x_i \\cdot x_j = x_j \\cdot x_i') + '): nessuna direzionalità apprendibile</span></div>';
         html += '</div>';
+
       } else if (activeTab === 1) {
         html += '<div class="arrow-pair">';
-        html += '<div class="arrow-card"><div class="pair">sedette \u2192 gatto</div><div class="weight">22%</div></div>';
-        html += '<div class="arrow-card"><div class="pair">gatto \u2192 sedette</div><div class="weight">22%</div></div>';
+        html += '<div class="arrow-card"><div class="pair">sedette \u2192 tappeto</div><div class="weight">' + pct(w,3,5) + '%</div></div>';
+        html += '<div class="arrow-card"><div class="pair">tappeto \u2192 sedette</div><div class="weight">' + pct(w,5,3) + '%</div></div>';
         html += '</div>';
-        html += '<div class="sym-note">La matrice \u00e8 <b>simmetrica</b>: ' + tex('\\alpha_{ij} = \\alpha_{ji}')
-          + ' perché ' + tex('(Wx_i)^T(Wx_j) = (Wx_j)^T(Wx_i)') + '</div>';
+        html += '<div class="sym-note">La matrice degli <b>score</b> è simmetrica: '
+          + tex('(Wx_i)^T\\!(Wx_j) = (Wx_j)^T\\!(Wx_i)')
+          + '<br>I pesi dopo softmax differiscono leggermente per la normalizzazione per riga, ma la "preferenza" è la stessa in entrambe le direzioni</div>';
         html += '<div class="problem-list">';
-        html += '<div class="problem-item"><span class="icon">\u2713</span><span>Emerge qualche pattern \u2014 meglio di nessuna matrice</span></div>';
-        html += '<div class="problem-item"><span class="icon">\u2717</span><span>Attenzione sempre simmetrica \u2014 impossibile modellare relazioni direzionali</span></div>';
-        html += '<div class="problem-item"><span class="icon">\u2717</span><span>Il criterio di matching coincide col contenuto estratto \u2014 nessun disaccoppiamento</span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2713</span><span>La proiezione appresa trasforma lo spazio, creando pattern diversi dal caso grezzo</span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2717</span><span>Score simmetrici: "sedette cerca tappeto" ha la stessa forza di "tappeto cerca sedette"</span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2717</span><span>Matching e contenuto coincidono: la stessa proiezione decide <i>chi guardare</i> e <i>cosa estrarre</i></span></div>';
         html += '</div>';
+
       } else {
         html += '<div class="arrow-pair">';
-        html += '<div class="arrow-card"><div class="pair">sedette \u2192 gatto</div><div class="weight" style="font-weight:600">40%</div></div>';
-        html += '<div class="arrow-card"><div class="pair">gatto \u2192 sedette</div><div class="weight">18%</div></div>';
+        html += '<div class="arrow-card"><div class="pair">sedette \u2192 gatto</div><div class="weight" style="font-weight:600">' + pct(w,3,1) + '%</div></div>';
+        html += '<div class="arrow-card"><div class="pair">gatto \u2192 sedette</div><div class="weight">' + pct(w,1,3) + '%</div></div>';
         html += '</div>';
-        html += '<div class="sym-note">La matrice \u00e8 <b>asimmetrica</b>: ' + tex('\\alpha_{ij} \\neq \\alpha_{ji}')
-          + ' perché ' + tex('(W_Q x_i)^T(W_K x_j) \\neq (W_Q x_j)^T(W_K x_i)') + '</div>';
+        html += '<div class="sym-note">La matrice degli score è <b>asimmetrica</b>: '
+          + tex('(W_Q x_i)^T\\!(W_K x_j) \\neq (W_Q x_j)^T\\!(W_K x_i)')
+          + '<br>Le relazioni sono genuinamente direzionali: "sedette cerca il soggetto" è diverso da "gatto cerca il verbo"</div>';
         html += '<div class="problem-list">';
-        html += '<div class="problem-item"><span class="icon">\u2713</span><span>Relazioni direzionali \u2014 "sedette" cerca il soggetto (40%), "gatto" \u00e8 meno interessato al verbo (18%)</span></div>';
-        html += '<div class="problem-item"><span class="icon">\u2713</span><span>Matching disaccoppiato dal contenuto \u2014 come trovo un token \u2260 cosa ne estraggo</span></div>';
-        html += '<div class="problem-item"><span class="icon">\u2713</span><span>Pesi nettamente differenziati \u2014 il modello sa cosa \u00e8 rilevante</span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2713</span><span><b>Relazioni direzionali</b>: '
+          + tex('W_Q') + ' codifica "cosa sto cercando", ' + tex('W_K') + ' codifica "cosa posso offrire"</span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2713</span><span><b>Matching disaccoppiato</b>: '
+          + tex('W_Q, W_K') + ' decidono <i>a chi prestare attenzione</i>; '
+          + tex('W_V') + ' decide <i>quali informazioni estrarre</i></span></div>';
+        html += '<div class="problem-item"><span class="icon">\u2713</span><span><b>Massima espressività</b>: il modello apprende tre funzioni diverse, ognuna ottimizzata per il suo ruolo</span></div>';
         html += '</div>';
       }
 
       content.innerHTML = html;
 
+      // Render formula block
       const fb = document.getElementById('formula-block');
       if (activeTab === 0) {
-        texBlock(fb, '\\text{score}_{ij} = x_i \\cdot x_j');
+        texBlock(fb, '\\text{score}_{ij} = \\frac{x_i \\cdot x_j}{\\sqrt{d_{\\text{model}}}}');
       } else if (activeTab === 1) {
-        texBlock(fb, '\\text{score}_{ij} = (Wx_i)^T(Wx_j) \\quad W_Q = W_K = W_V = W');
+        texBlock(fb, '\\text{score}_{ij} = \\frac{(Wx_i)^T(Wx_j)}{\\sqrt{d_k}} \\qquad W_Q = W_K = W_V = W');
       } else {
-        texBlock(fb, '\\text{score}_{ij} = (W_Q x_i)^T(W_K x_j) \\quad W_Q \\neq W_K \\neq W_V');
+        texBlock(fb, '\\text{score}_{ij} = \\frac{(W_Q x_i)^T(W_K x_j)}{\\sqrt{d_k}} \\qquad W_Q \\neq W_K \\neq W_V');
       }
     }
 
     render();
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
   </script>
 </body>
 
